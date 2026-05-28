@@ -52,3 +52,5 @@ end
 gem "alba", "~> 3.10"
 
 gem "oj", "~> 3.17"
+
+gem "pagy", "~> 43.5"
