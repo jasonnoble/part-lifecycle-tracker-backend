@@ -49,4 +49,37 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+  rspec:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: part_lifecycle_tracker_test
+          POSTGRES_PASSWORD: postgres
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Setup Database
+        run: bin/rails db:create db:migrate
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
+
+      - name: Run tests
+        run: bundle exec rspec
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
