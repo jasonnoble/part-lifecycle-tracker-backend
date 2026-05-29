@@ -41,7 +41,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_172310) do
 
   create_table "lifecycle_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "actor", null: false
-    t.datetime "created_at"
     t.string "event_type", null: false
     t.jsonb "metadata"
     t.text "notes"
@@ -50,7 +49,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_172310) do
     t.datetime "recorded_at", default: -> { "now()" }, null: false
     t.index [ "occurred_at" ], name: "index_lifecycle_events_on_occurred_at"
     t.index [ "part_instance_id", "occurred_at" ], name: "index_lifecycle_events_on_instance_occurred_at"
-    t.index [ "part_instance_id" ], name: "index_lifecycle_events_on_part_instance_id"
     t.check_constraint "event_type::text = ANY (ARRAY['ORDERED'::character varying, 'RECEIVED'::character varying, 'INSPECTED'::character varying, 'IN_ASSEMBLY'::character varying, 'INSTALLED'::character varying, 'VALIDATED'::character varying, 'CERTIFIED'::character varying]::text[])", name: "lifecycle_events_event_type_check"
     t.check_constraint "length(TRIM(BOTH FROM actor)) > 0", name: "lifecycle_events_actor_present"
   end

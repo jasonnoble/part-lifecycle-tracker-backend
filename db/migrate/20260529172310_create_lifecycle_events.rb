@@ -1,15 +1,13 @@
 class CreateLifecycleEvents < ActiveRecord::Migration[8.1]
   def change
     create_table :lifecycle_events, id: :uuid do |t|
-      t.references :part_instance, null: false, type: :uuid, foreign_key: { to_table: :part_instances }
+      t.references :part_instance, null: false, type: :uuid, index: false, foreign_key: { to_table: :part_instances }
       t.string :event_type, null: false
       t.string :actor, null: false
       t.text :notes
       t.jsonb :metadata
       t.datetime :occurred_at, null: false # user-supplied, NO default
       t.datetime :recorded_at, null: false, default: -> { "now()" }
-      t.datetime :created_at
-      # no created_at / updated_at — append-only; recorded_at is the creation stamp
     end
 
     add_index :lifecycle_events, :occurred_at
