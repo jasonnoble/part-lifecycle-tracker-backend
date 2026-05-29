@@ -1,5 +1,11 @@
 AllCops:
   NewCops: enable
+  Exclude:
+    - "db/schema.rb"
+
+inherit_mode:
+  merge:
+    - Exclude
 
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
