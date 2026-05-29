@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_213800) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_220724) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -145,6 +145,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_213800) do
     t.check_constraint "status::text = ANY (ARRAY['OPEN'::character varying, 'PARTIALLY_RECEIVED'::character varying, 'RECEIVED'::character varying, 'CLOSED'::character varying]::text[])", name: "supplier_purchase_orders_status_check"
   end
 
+  create_table "test_records", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "conducted_by", null: false
+    t.text "notes"
+    t.datetime "occurred_at", null: false
+    t.uuid "part_instance_id", null: false
+    t.datetime "recorded_at", default: -> { "now()" }, null: false
+    t.string "result", null: false
+    t.string "test_type", null: false
+    t.index [ "part_instance_id" ], name: "index_test_records_on_part_instance_id"
+    t.check_constraint "length(TRIM(BOTH FROM conducted_by)) > 0", name: "test_records_conducted_by_present"
+    t.check_constraint "length(TRIM(BOTH FROM test_type)) > 0", name: "test_records_test_type_present"
+    t.check_constraint "result::text = ANY (ARRAY['PASS'::character varying, 'FAIL'::character varying, 'INCONCLUSIVE'::character varying]::text[])", name: "test_records_result_check"
+  end
+
   create_table "work_order_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "bom_item_id", null: false
     t.string "certified_actor"
@@ -191,6 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_213800) do
   add_foreign_key "supplier_purchase_order_lines", "part_definitions"
   add_foreign_key "supplier_purchase_order_lines", "supplier_purchase_orders"
   add_foreign_key "supplier_purchase_orders", "customer_orders"
+  add_foreign_key "test_records", "part_instances"
   add_foreign_key "work_order_steps", "bom_items"
   add_foreign_key "work_order_steps", "part_instances", column: "installed_part_instance_id"
   add_foreign_key "work_order_steps", "work_orders"
