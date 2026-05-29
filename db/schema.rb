@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_211725) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_213800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -145,6 +145,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_211725) do
     t.check_constraint "status::text = ANY (ARRAY['OPEN'::character varying, 'PARTIALLY_RECEIVED'::character varying, 'RECEIVED'::character varying, 'CLOSED'::character varying]::text[])", name: "supplier_purchase_orders_status_check"
   end
 
+  create_table "work_order_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "bom_item_id", null: false
+    t.string "certified_actor"
+    t.datetime "certified_at"
+    t.datetime "created_at", null: false
+    t.string "installed_actor"
+    t.datetime "installed_at"
+    t.uuid "installed_part_instance_id"
+    t.string "status", default: "PENDING", null: false
+    t.datetime "updated_at", null: false
+    t.string "validated_actor"
+    t.datetime "validated_at"
+    t.uuid "work_order_id", null: false
+    t.index [ "bom_item_id" ], name: "index_work_order_steps_on_bom_item_id"
+    t.index [ "installed_part_instance_id" ], name: "index_work_order_steps_on_installed_part_instance_id"
+    t.index [ "work_order_id" ], name: "index_work_order_steps_on_work_order_id"
+    t.check_constraint "status::text = ANY (ARRAY['PENDING'::character varying, 'INSTALLED'::character varying, 'VALIDATED'::character varying, 'CERTIFIED'::character varying, 'BLOCKED'::character varying]::text[])", name: "work_order_steps_status_check"
+    t.check_constraint "validated_actor IS NULL OR validated_actor::text <> installed_actor::text", name: "work_order_steps_four_eyes"
+  end
+
+  create_table "work_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "customer_order_line_id"
+    t.uuid "part_definition_id", null: false
+    t.uuid "part_instance_id", null: false
+    t.string "status", default: "OPEN", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "customer_order_line_id" ], name: "index_work_orders_on_customer_order_line_id"
+    t.index [ "part_definition_id" ], name: "index_work_orders_on_part_definition_id"
+    t.index [ "part_instance_id" ], name: "index_work_orders_on_part_instance_id"
+    t.check_constraint "status::text = ANY (ARRAY['OPEN'::character varying, 'BLOCKED'::character varying, 'COMPLETE'::character varying]::text[])", name: "work_orders_status_check"
+  end
+
   add_foreign_key "bom_item_dependencies", "bom_items", column: "dependent_bom_item_id"
   add_foreign_key "bom_item_dependencies", "bom_items", column: "prerequisite_bom_item_id"
   add_foreign_key "bom_items", "part_definitions", column: "child_part_definition_id"
@@ -158,4 +191,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_211725) do
   add_foreign_key "supplier_purchase_order_lines", "part_definitions"
   add_foreign_key "supplier_purchase_order_lines", "supplier_purchase_orders"
   add_foreign_key "supplier_purchase_orders", "customer_orders"
+  add_foreign_key "work_order_steps", "bom_items"
+  add_foreign_key "work_order_steps", "part_instances", column: "installed_part_instance_id"
+  add_foreign_key "work_order_steps", "work_orders"
+  add_foreign_key "work_orders", "customer_order_lines"
+  add_foreign_key "work_orders", "part_definitions"
+  add_foreign_key "work_orders", "part_instances"
 end
