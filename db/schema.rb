@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_205047) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_211725) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -119,6 +119,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_205047) do
     t.check_constraint "quantity_reserved >= 0", name: "stock_quantity_reserved_non_negative"
   end
 
+  create_table "supplier_purchase_order_lines", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "part_definition_id", null: false
+    t.integer "quantity", null: false
+    t.integer "quantity_received", default: 0, null: false
+    t.string "status", default: "NEEDS_ORDERING", null: false
+    t.uuid "supplier_purchase_order_id", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "part_definition_id" ], name: "index_supplier_purchase_order_lines_on_part_definition_id"
+    t.index [ "supplier_purchase_order_id" ], name: "idx_on_supplier_purchase_order_id_71d02d6b79"
+    t.check_constraint "quantity > 0", name: "supplier_purchase_order_lines_quantity_positive"
+    t.check_constraint "quantity_received >= 0", name: "supplier_purchase_order_lines_quantity_received_non_negative"
+    t.check_constraint "status::text = ANY (ARRAY['NEEDS_ORDERING'::character varying, 'ORDERED'::character varying, 'PARTIALLY_RECEIVED'::character varying, 'RECEIVED'::character varying]::text[])", name: "supplier_purchase_order_lines_status_check"
+  end
+
+  create_table "supplier_purchase_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "customer_order_id"
+    t.string "status", default: "OPEN", null: false
+    t.string "supplier_id", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "customer_order_id" ], name: "index_supplier_purchase_orders_on_customer_order_id"
+    t.check_constraint "length(TRIM(BOTH FROM supplier_id)) > 0", name: "supplier_purchase_orders_supplier_id_present"
+    t.check_constraint "status::text = ANY (ARRAY['OPEN'::character varying, 'PARTIALLY_RECEIVED'::character varying, 'RECEIVED'::character varying, 'CLOSED'::character varying]::text[])", name: "supplier_purchase_orders_status_check"
+  end
+
   add_foreign_key "bom_item_dependencies", "bom_items", column: "dependent_bom_item_id"
   add_foreign_key "bom_item_dependencies", "bom_items", column: "prerequisite_bom_item_id"
   add_foreign_key "bom_items", "part_definitions", column: "child_part_definition_id"
@@ -129,4 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_205047) do
   add_foreign_key "part_instances", "part_definitions"
   add_foreign_key "stock_audit_logs", "part_definitions"
   add_foreign_key "stocks", "part_definitions"
+  add_foreign_key "supplier_purchase_order_lines", "part_definitions"
+  add_foreign_key "supplier_purchase_order_lines", "supplier_purchase_orders"
+  add_foreign_key "supplier_purchase_orders", "customer_orders"
 end
