@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_172310) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_181529) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -79,10 +79,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_172310) do
     t.check_constraint "length(TRIM(BOTH FROM serial_number)) > 0", name: "part_instances_serial_number_present"
   end
 
+  create_table "stock_audit_logs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "change_amount", null: false
+    t.uuid "part_definition_id", null: false
+    t.string "reason", null: false
+    t.datetime "recorded_at", default: -> { "now()" }, null: false
+    t.index [ "part_definition_id", "recorded_at" ], name: "index_stock_audit_logs_on_part_definition_id_and_recorded_at"
+    t.check_constraint "change_amount <> 0", name: "stock_audit_logs_change_amount_non_zero"
+    t.check_constraint "length(TRIM(BOTH FROM reason)) > 0", name: "stock_audit_logs_reason_present"
+  end
+
+  create_table "stocks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "part_definition_id", null: false
+    t.integer "quantity_on_hand", default: 0, null: false
+    t.integer "quantity_reserved", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index [ "part_definition_id" ], name: "index_stocks_on_part_definition_id", unique: true
+    t.check_constraint "quantity_on_hand >= 0", name: "stock_quantity_on_hand_non_negative"
+    t.check_constraint "quantity_reserved >= 0", name: "stock_quantity_reserved_non_negative"
+  end
+
   add_foreign_key "bom_item_dependencies", "bom_items", column: "dependent_bom_item_id"
   add_foreign_key "bom_item_dependencies", "bom_items", column: "prerequisite_bom_item_id"
   add_foreign_key "bom_items", "part_definitions", column: "child_part_definition_id"
   add_foreign_key "bom_items", "part_definitions", column: "parent_part_definition_id"
   add_foreign_key "lifecycle_events", "part_instances"
   add_foreign_key "part_instances", "part_definitions"
+  add_foreign_key "stock_audit_logs", "part_definitions"
+  add_foreign_key "stocks", "part_definitions"
 end
