@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_181529) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_205047) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -37,6 +37,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_181529) do
     t.index [ "parent_part_definition_id" ], name: "index_bom_items_on_parent_part_definition_id"
     t.check_constraint "parent_part_definition_id <> child_part_definition_id", name: "bom_items_no_self_reference"
     t.check_constraint "quantity > 0", name: "bom_items_quantity_positive"
+  end
+
+  create_table "customer_order_lines", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "customer_order_id", null: false
+    t.uuid "part_definition_id", null: false
+    t.integer "quantity", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "customer_order_id" ], name: "index_customer_order_lines_on_customer_order_id"
+    t.check_constraint "quantity > 0", name: "customer_order_lines_quantity_positive"
+  end
+
+  create_table "customer_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "customer_name", null: false
+    t.string "status", default: "OPEN", null: false
+    t.datetime "updated_at", null: false
+    t.check_constraint "length(TRIM(BOTH FROM customer_name)) > 0", name: "customer_orders_customer_name_present"
+    t.check_constraint "status::text = ANY (ARRAY['OPEN'::character varying, 'IN_FULFILLMENT'::character varying, 'COMPLETE'::character varying]::text[])", name: "customer_orders_status_check"
   end
 
   create_table "lifecycle_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -104,6 +123,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_181529) do
   add_foreign_key "bom_item_dependencies", "bom_items", column: "prerequisite_bom_item_id"
   add_foreign_key "bom_items", "part_definitions", column: "child_part_definition_id"
   add_foreign_key "bom_items", "part_definitions", column: "parent_part_definition_id"
+  add_foreign_key "customer_order_lines", "customer_orders"
+  add_foreign_key "customer_order_lines", "part_definitions"
   add_foreign_key "lifecycle_events", "part_instances"
   add_foreign_key "part_instances", "part_definitions"
   add_foreign_key "stock_audit_logs", "part_definitions"
