@@ -2,12 +2,17 @@
 service: part_lifecycle_tracker
 
 # Name of the container image (use your-user/app-name on external registries).
-image: part_lifecycle_tracker
+image: ghcr.io/jasonnoble/part_lifecycle_tracker
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    hosts:
+      - 5.78.219.138
+ssh:
+  user: jasonn
+  keys_only: false
+  config: [ "~/.ssh/config" ]
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,30 +25,27 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  host: partledger.jasonnoble.dev
 
 # Where you keep your container images.
 registry:
   # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
-  server: localhost:5555
-
-  # Needed for authenticated registries.
-  # username: your-user
-
-  # Always use an access token rather than real password when possible.
-  # password:
-  #   - KAMAL_REGISTRY_PASSWORD
+  server: ghcr.io
+  username: jasonnoble
+  password:
+    - GHCR_TOKEN
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
   secret:
+    - DATABASE_URL
     - RAILS_MASTER_KEY
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
-    SOLID_QUEUE_IN_PUMA: true
+    # SOLID_QUEUE_IN_PUMA: true
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
@@ -51,12 +53,10 @@ env:
     # Set number of cores available to the application on each server (default: 1).
     # WEB_CONCURRENCY: 2
 
-    # Match this to any external database server to configure Active Record correctly
-    # Use part_lifecycle_tracker-db for a db accessory server on same machine via local kamal docker network.
-    # DB_HOST: 192.168.0.2
-
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: true
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.
@@ -71,6 +71,10 @@ aliases:
 volumes:
   - "part_lifecycle_tracker_storage:/rails/storage"
 
+# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
+# hitting 404 on in-flight requests. Combines all files from new and old
+# version inside the asset_path.
+#asset_path: /rails/public/assets
 
 # Configure the image builder.
 builder:
@@ -91,22 +95,20 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     # Change to 3306 to expose port to the world instead of just local network.
-#     port: "127.0.0.1:3306:3306"
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
+#accessories:
+#  db:
+#    image: postgres:16
+#    host: 5.78.219.138
+#    # Change to 3306 to expose port to the world instead of just local network.
+#    port: "5432"
+#    env:
+#      secret:
+#        - POSTGRES_PASSWORD
+#      clear:
+#        POSTGRES_USER: part_lifecycle_tracker
+#        POSTGRES_DB: part_lifecycle_tracker_production
+#    volumes:
+#      - db_data:/var/lib/postgresql/data
 #   redis:
 #     image: valkey/valkey:8
 #     host: 192.168.0.2
