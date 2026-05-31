@@ -1562,14 +1562,14 @@ paths:
               example:
                 data:
                 - id: 00000000-0000-0000-0000-000000000000
-                  supplierId: VENDOR-0002
+                  supplierId: VENDOR-0014
                   status: OPEN
                   customerOrderId:
                   lines: []
                   createdAt: '2026-01-01T00:00:00.000Z'
                   updatedAt: '2026-01-01T00:00:00.000Z'
                 - id: 00000000-0000-0000-0000-000000000000
-                  supplierId: VENDOR-0001
+                  supplierId: VENDOR-0013
                   status: OPEN
                   customerOrderId:
                   lines: []
@@ -1793,3 +1793,156 @@ paths:
               example:
                 error: Couldn't find SupplierPurchaseOrder with 'id'="00000000-0000-0000-0000-000000000000"
                 code: NOT_FOUND
+  "/supplier-purchase-orders/{id}/receive":
+    post:
+      summary: receive
+      tags:
+      - SupplierPurchaseOrder
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lineId:
+                        type: string
+                      quantity:
+                        type: integer
+                      serials:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                    - lineId
+                    - quantity
+                    - serials
+              required:
+              - lines
+            example:
+              lines:
+              - lineId: 00000000-0000-0000-0000-000000000000
+                quantity: 2
+                serials:
+                - HMR-0001
+                - HMR-0002
+      responses:
+        '200':
+          description: marks PO PARTIALLY_RECEIVED when one of several lines is unreceived
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  supplierId:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderId:
+                    nullable: true
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        quantityReceived:
+                          type: integer
+                        status:
+                          type: string
+                        partNumber:
+                          type: string
+                        partName:
+                          type: string
+                      required:
+                      - id
+                      - quantity
+                      - quantityReceived
+                      - status
+                      - partNumber
+                      - partName
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - supplierId
+                - status
+                - customerOrderId
+                - lines
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                supplierId: VENDOR-0004
+                status: PARTIALLY_RECEIVED
+                customerOrderId:
+                lines:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 2
+                  quantityReceived: 2
+                  status: RECEIVED
+                  partNumber: HORN-LCC-001
+                  partName: La Cucaracha Horn
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 1
+                  quantityReceived: 0
+                  status: ORDERED
+                  partNumber: DOME-XPT-001
+                  partName: Transparent Dome
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 when the PO does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find SupplierPurchaseOrder with 'id'="00000000-0000-0000-0000-000000000000"
+                code: NOT_FOUND
+        '422':
+          description: returns 422 when a lineId does not belong to this PO
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: lineId 00000000-0000-0000-0000-000000000000 does not belong
+                  to this purchase order
+                code: VALIDATION_FAILED
