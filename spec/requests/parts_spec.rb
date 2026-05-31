@@ -53,6 +53,32 @@ RSpec.describe "Parts", type: :request do
       expect(response).to have_http_status(:ok)
       expect(json["data"].map { |p| p["partNumber"] }).to contain_exactly("THE-HOMER-001")
     end
+
+    it "paginates across pages, exposing accurate meta" do
+      create(:part_definition, part_number: "PG-001")
+      create(:part_definition, part_number: "PG-002")
+      create(:part_definition, part_number: "PG-003")
+
+      get "/parts", params: { limit: 2 }
+
+      expect(response).to have_http_status(:ok)
+      expect(json["data"].map { |p| p["partNumber"] }).to eq(%w[PG-001 PG-002])
+      expect(json["meta"]).to include("currentPage" => 1, "totalPages" => 2, "totalCount" => 3)
+
+      get "/parts", params: { limit: 2, page: 2 }
+
+      expect(response).to have_http_status(:ok)
+      expect(json["data"].map { |p| p["partNumber"] }).to eq(%w[PG-003])
+      expect(json["meta"]).to include("currentPage" => 2, "totalPages" => 2, "totalCount" => 3)
+    end
+
+    it "returns an empty data array with meta when there are no parts" do
+      get "/parts"
+
+      expect(response).to have_http_status(:ok)
+      expect(json["data"]).to eq([])
+      expect(json["meta"]).to include("currentPage" => 1, "totalCount" => 0)
+    end
   end
 
   describe "POST /parts" do
