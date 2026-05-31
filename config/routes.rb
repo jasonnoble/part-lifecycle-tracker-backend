@@ -20,6 +20,8 @@ Rails.application.routes.draw do
     resources :tests, only: %i[index create], module: :instances
   end
 
+  resources :customer_orders, path: "customer-orders", only: %i[index show create]
+
   resources :supplier_purchase_orders, path: "supplier-purchase-orders", only: %i[index create show] do
     member do
       post :receive

@@ -8,6 +8,270 @@ info:
 servers:
 - url: http://localhost:3000
 paths:
+  "/customer-orders":
+    get:
+      summary: index
+      tags:
+      - CustomerOrder
+      responses:
+        '200':
+          description: returns a paginated list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        customerName:
+                          type: string
+                        status:
+                          type: string
+                        lines:
+                          type: array
+                          items: {}
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - customerName
+                      - status
+                      - lines
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  customerName: Springfield Taxi Co
+                  status: OPEN
+                  lines: []
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  customerName: Powell Motors
+                  status: OPEN
+                  lines: []
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 2
+    post:
+      summary: create
+      tags:
+      - CustomerOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerName:
+                  type: string
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      partNumber:
+                        type: string
+                      quantity:
+                        type: integer
+                    required:
+                    - partNumber
+                    - quantity
+              required:
+              - customerName
+              - lines
+            example:
+              customerName: Powell Motors
+              lines:
+              - partNumber: THE-HOMER-001
+                quantity: 5
+      responses:
+        '201':
+          description: persists the CO and its lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  customerName:
+                    type: string
+                  status:
+                    type: string
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        partNumber:
+                          type: string
+                        partName:
+                          type: string
+                      required:
+                      - id
+                      - quantity
+                      - partNumber
+                      - partName
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - customerName
+                - status
+                - lines
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                customerName: Powell Motors
+                status: OPEN
+                lines:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 5
+                  partNumber: THE-HOMER-001
+                  partName: Example Part
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '422':
+          description: does not enqueue any job when validation fails
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: lines must include at least one line item
+                code: VALIDATION_FAILED
+  "/customer-orders/{id}":
+    get:
+      summary: show
+      tags:
+      - CustomerOrder
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      responses:
+        '200':
+          description: returns the CO with its lines including part details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  customerName:
+                    type: string
+                  status:
+                    type: string
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        partNumber:
+                          type: string
+                        partName:
+                          type: string
+                      required:
+                      - id
+                      - quantity
+                      - partNumber
+                      - partName
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - customerName
+                - status
+                - lines
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                customerName: Powell Motors
+                status: OPEN
+                lines:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 5
+                  partNumber: THE-HOMER-001
+                  partName: The Homer
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find CustomerOrder with 'id'="00000000-0000-0000-0000-000000000000"
+                code: NOT_FOUND
   "/instances":
     get:
       summary: index
