@@ -3,7 +3,10 @@
 CI.run do
   step "Setup", "bin/setup --skip-server"
 
-  step "Tests: RSpec", "bundle exec rspec"
+  # Run the suite with OPENAPI=1 so it also regenerates doc/openapi.yaml, then
+  # fail if the committed spec drifted from what the request specs produce.
+  step "Tests: RSpec (regenerates OpenAPI doc)", "OPENAPI=1 bundle exec rspec"
+  step "Docs: OpenAPI doc is committed and current", "git diff --exit-code doc/openapi.yaml"
 
   step "Style: Ruby", "bin/rubocop"
 
