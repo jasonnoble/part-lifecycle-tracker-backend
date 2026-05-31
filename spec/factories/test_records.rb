@@ -6,5 +6,13 @@ FactoryBot.define do
     notes { nil }
     conducted_by { "qa@factory.com" }
     occurred_at { Time.current }
+
+    trait :failed do
+      result { "FAIL" }
+    end
+
+    trait :inconclusive do
+      result { "INCONCLUSIVE" }
+    end
   end
 end

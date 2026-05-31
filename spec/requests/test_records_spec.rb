@@ -74,8 +74,8 @@ RSpec.describe "Test Records", type: :request do
 
       expect(response).to have_http_status(:created)
       record = instance.test_records.last
-      expect(record.recorded_at).to be > Time.utc(2020, 1, 1)
-      expect(record.recorded_at.utc.year).to eq(Time.current.utc.year)
+      # Server-set to "now" (within a minute), not the client-supplied year-2000 value.
+      expect(record.recorded_at).to be_within(1.minute).of(Time.current)
     end
 
     it "returns 422 for an invalid result enum" do
