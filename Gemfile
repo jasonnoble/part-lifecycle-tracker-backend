@@ -52,8 +52,11 @@ group :development, :test do
   gem "rspec-openapi", "~> 0.18"
 
   # Code coverage measurement (SimpleCov) + per-PR diff coverage gate (undercover).
+  # Both require: false — they're CLI-only / loaded explicitly in spec_helper.
+  # (undercover pulls in parser via imagen; auto-requiring it made every rails
+  # command print parser's "running 4.0.5" warning at boot.)
   gem "simplecov", require: false
-  gem "undercover"
+  gem "undercover", require: false
 end
 
 gem "alba", "~> 3.10"
