@@ -22,3 +22,24 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+
+## Code coverage
+
+Test coverage is measured by [SimpleCov](https://github.com/simplecov-ruby/simplecov)
+and gated per-PR by [undercover](https://github.com/grodowski/undercover).
+
+* Running `bundle exec rspec` writes a browsable HTML report to `coverage/index.html`
+  and `coverage/coverage.json` (consumed by undercover). Branch coverage is enabled.
+  `coverage/` is gitignored — no baseline file is committed.
+* **Diff gate:** every PR must keep new or changed Ruby code covered. The undercover
+  step (`bundle exec undercover --compare <base>`) fails the build when changed
+  blocks lack a test. This enforces "a merge can only keep coverage the same or
+  raise it" by construction, without persisting a baseline percentage.
+* **Floor:** `SimpleCov.minimum_coverage` in `spec/spec_helper.rb` is a coarse
+  safety floor (line 75% / branch 90%) — deliberately set a few points below the
+  measured baseline (line ~80% / branch 95%) so it's a safety net, not a tripwire;
+  the `undercover` diff gate does the real per-PR enforcement. It is
+  **ratchet-up only** — raise it as coverage improves; never lower it.
+
+Native build note: undercover depends on `rugged`, whose native extension needs
+`cmake` and `pkg-config` (`brew install cmake pkg-config` on macOS).

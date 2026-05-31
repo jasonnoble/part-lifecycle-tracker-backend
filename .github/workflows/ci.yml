@@ -68,6 +68,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # undercover diffs against the PR base branch and needs full git history
+          # (a shallow clone breaks --compare).
+          fetch-depth: 0
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -90,3 +94,14 @@ jobs:
             echo "::error::doc/openapi.yaml is out of date. Run 'OPENAPI=1 bundle exec rspec' and commit the result."
             exit 1
           }
+
+      # Diff-coverage gate: fails the build when changed code in this PR is not
+      # covered. Compares to the PR base branch (correct for stacked PRs); reads
+      # coverage/coverage.json produced by the rspec step above. PR-only.
+      - name: Coverage gate (undercover)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          bundle exec undercover --compare "origin/${{ github.base_ref }}"
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
