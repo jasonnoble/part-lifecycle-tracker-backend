@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       post "steps/:step_id/install", to: "work_order_steps#install"
       post "steps/:step_id/validate", to: "work_order_steps#validate_step"
       post "steps/:step_id/certify", to: "work_order_steps#certify"
+      post :complete
     end
   end
 

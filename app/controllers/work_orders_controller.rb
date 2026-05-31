@@ -72,4 +72,45 @@ class WorkOrdersController < ApplicationController
   rescue ActiveRecord::RecordInvalid => e
     render_validation_errors(e.record)
   end
+
+  # POST /work-orders/:id/complete
+  # Gate: every step must be CERTIFIED. On success the work order transitions to
+  # COMPLETE and a CERTIFIED lifecycle event is appended to the assembled unit
+  # (the work order's part_instance), whose current_status becomes CERTIFIED.
+  def complete
+    order = WorkOrder.includes(STEP_INCLUDES).find(params[:id])
+
+    if order.COMPLETE?
+      return render_error("Work order is already COMPLETE", "INVALID_STATE", :unprocessable_content)
+    end
+
+    uncertified = order.work_order_steps.where.not(status: "CERTIFIED")
+    if uncertified.exists?
+      return render_error(
+        "All steps must be CERTIFIED before the work order can be completed",
+        "STEPS_NOT_CERTIFIED",
+        :unprocessable_content
+      )
+    end
+
+    now = Time.current
+    instance = order.part_instance
+    WorkOrder.transaction do
+      order.complete # AASM OPEN/BLOCKED -> COMPLETE
+      order.save!
+
+      instance.lifecycle_events.create!(
+        event_type: "CERTIFIED",
+        actor: "system",
+        occurred_at: now,
+        recorded_at: now
+      )
+      instance.update!(current_status: "CERTIFIED")
+    end
+
+    order = WorkOrder.includes(*ORDER_INCLUDES).find(order.id)
+    render json: WorkOrderSerializer.new(order).serializable_hash
+  rescue ActiveRecord::RecordInvalid => e
+    render_validation_errors(e.record)
+  end
 end
