@@ -1500,3 +1500,296 @@ paths:
               example:
                 error: Cannot transition from DRAFT to BOGUS
                 code: INVALID_TRANSITION
+  "/supplier-purchase-orders":
+    get:
+      summary: index
+      tags:
+      - SupplierPurchaseOrder
+      responses:
+        '200':
+          description: returns a paginated list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        supplierId:
+                          type: string
+                        status:
+                          type: string
+                        customerOrderId:
+                          nullable: true
+                        lines:
+                          type: array
+                          items: {}
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - supplierId
+                      - status
+                      - customerOrderId
+                      - lines
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  supplierId: VENDOR-0002
+                  status: OPEN
+                  customerOrderId:
+                  lines: []
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  supplierId: VENDOR-0001
+                  status: OPEN
+                  customerOrderId:
+                  lines: []
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 2
+    post:
+      summary: create
+      tags:
+      - SupplierPurchaseOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                supplierId:
+                  type: string
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      partNumber:
+                        type: string
+                      quantity:
+                        type: integer
+                    required:
+                    - partNumber
+                    - quantity
+              required:
+              - supplierId
+              - lines
+            example:
+              supplierId: VENDOR-ACME-001
+              lines:
+              - partNumber: HORN-LCC-001
+                quantity: 50
+      responses:
+        '201':
+          description: persists the PO and its lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  supplierId:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderId:
+                    nullable: true
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        quantityReceived:
+                          type: integer
+                        status:
+                          type: string
+                        partNumber:
+                          type: string
+                        partName:
+                          type: string
+                      required:
+                      - id
+                      - quantity
+                      - quantityReceived
+                      - status
+                      - partNumber
+                      - partName
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - supplierId
+                - status
+                - customerOrderId
+                - lines
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                supplierId: VENDOR-ACME-001
+                status: OPEN
+                customerOrderId:
+                lines:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 50
+                  quantityReceived: 0
+                  status: NEEDS_ORDERING
+                  partNumber: HORN-LCC-001
+                  partName: Example Part
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '422':
+          description: returns 422 when a partNumber is unknown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Unknown partNumber: NOPE-999'
+                code: VALIDATION_FAILED
+  "/supplier-purchase-orders/{id}":
+    get:
+      summary: show
+      tags:
+      - SupplierPurchaseOrder
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      responses:
+        '200':
+          description: returns the PO with its lines including part details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  supplierId:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderId:
+                    nullable: true
+                  lines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        quantityReceived:
+                          type: integer
+                        status:
+                          type: string
+                        partNumber:
+                          type: string
+                        partName:
+                          type: string
+                      required:
+                      - id
+                      - quantity
+                      - quantityReceived
+                      - status
+                      - partNumber
+                      - partName
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - supplierId
+                - status
+                - customerOrderId
+                - lines
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                supplierId: VENDOR-ACME-001
+                status: OPEN
+                customerOrderId:
+                lines:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 50
+                  quantityReceived: 0
+                  status: NEEDS_ORDERING
+                  partNumber: HORN-LCC-001
+                  partName: La Cucaracha Horn
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find SupplierPurchaseOrder with 'id'="00000000-0000-0000-0000-000000000000"
+                code: NOT_FOUND
