@@ -12,7 +12,8 @@ FactoryBot.define do
 
     trait :partially_received do
       status { "PARTIALLY_RECEIVED" }
-      quantity_received { (quantity * 0.2).round }
+      # 20% of the line, floored — integer math, no float representation error
+      quantity_received { quantity * 20 / 100 }
     end
 
     trait :received do
