@@ -20,7 +20,11 @@ Rails.application.routes.draw do
     resources :tests, only: %i[index create], module: :instances
   end
 
-  resources :supplier_purchase_orders, path: "supplier-purchase-orders", only: %i[index create show]
+  resources :supplier_purchase_orders, path: "supplier-purchase-orders", only: %i[index create show] do
+    member do
+      post :receive
+    end
+  end
 
   # OpenAPI viewer (development only). The spec is generated from request specs
   # via `OPENAPI=1 bundle exec rspec`; see doc/openapi.yaml.

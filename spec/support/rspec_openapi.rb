@@ -25,11 +25,15 @@ RSpec::OpenAPI.formats_builder = ->(_example, key) {
 # string (e.g. a "Couldn't find … id=<uuid>" error message).
 RSPEC_OPENAPI_UUID = /\h{8}-\h{4}-\h{4}-\h{4}-\h{12}/
 RSPEC_OPENAPI_TIMESTAMP = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/
-# FactoryBot default sequences (`name { "Part #{n}" }`, `part_number { "PART-####" }`)
-# leak their counter into captured examples, so the doc drifts by spec order.
+# FactoryBot default sequences leak their counter into captured examples, so the
+# doc drifts by spec order. Normalize each to a fixed placeholder:
+# - `name { "Part #{n}" }`            -> "Example Part"
+# - `part_number { "PART-####" }`     -> "PART-0000"
+# - `supplier_id { "VENDOR-####" }`   -> "VENDOR-0000"
 # Anchored (whole-value) so real names like "The Homer" / "MUZZLE-001" are untouched.
 RSPEC_OPENAPI_FACTORY_NAME = /\APart \d+\z/
 RSPEC_OPENAPI_FACTORY_PART_NUMBER = /\APART-\d+\z/
+RSPEC_OPENAPI_FACTORY_SUPPLIER_ID = /\AVENDOR-\d+\z/
 
 RSPEC_OPENAPI_STABILIZE = lambda do |node|
   case node
@@ -40,6 +44,7 @@ RSPEC_OPENAPI_STABILIZE = lambda do |node|
         .gsub(RSPEC_OPENAPI_TIMESTAMP, "2026-01-01T00:00:00.000Z")
         .gsub(RSPEC_OPENAPI_FACTORY_NAME, "Example Part")
         .gsub(RSPEC_OPENAPI_FACTORY_PART_NUMBER, "PART-0000")
+        .gsub(RSPEC_OPENAPI_FACTORY_SUPPLIER_ID, "VENDOR-0000")
   else node
   end
 end

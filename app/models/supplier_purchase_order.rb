@@ -3,7 +3,9 @@ class SupplierPurchaseOrder < ApplicationRecord
 
   STATUSES = %w[OPEN PARTIALLY_RECEIVED RECEIVED CLOSED].freeze
 
-  has_many :supplier_purchase_order_lines, dependent: :destroy
+  # Stable ordering so serialized `lines` (and the generated OpenAPI example) are
+  # deterministic regardless of insertion/return order.
+  has_many :supplier_purchase_order_lines, -> { order(:created_at, :id) }, dependent: :destroy
   belongs_to :customer_order, optional: true
 
   validates :supplier_id, presence: true
