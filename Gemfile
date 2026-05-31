@@ -47,6 +47,9 @@ group :development, :test do
 
   gem "rspec-rails", "~> 8.0"
   gem "factory_bot_rails", "~> 6.5"
+
+  # Generates doc/openapi.yaml from request specs (run with OPENAPI=1); no-op otherwise.
+  gem "rspec-openapi", "~> 0.18"
 end
 
 gem "alba", "~> 3.10"
