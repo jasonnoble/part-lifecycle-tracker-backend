@@ -147,6 +147,63 @@ RSpec.describe "Instances", type: :request do
       expect(json["meta"]).to include("currentPage" => 1, "totalCount" => 3)
     end
 
+    # openapi: false on the ordering/pagination edge cases below — they share the
+    # GET events path/status with the canonical example above and would otherwise
+    # overwrite that nicer multi-status example in the generated doc.
+    it "orders a backdated event ahead of an earlier-created but later-occurring event", openapi: false do
+      part = create(:part_definition, part_number: "THE-HOMER-001")
+      instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
+      # Created first, but occurred later in real-world time.
+      create(:lifecycle_event, part_instance: instance, event_type: "INSTALLED",
+                               occurred_at: Time.utc(2026, 5, 30, 10))
+      # Created second, but backdated to an earlier real-world time.
+      create(:lifecycle_event, part_instance: instance, event_type: "RECEIVED",
+                               occurred_at: Time.utc(2026, 5, 28, 10))
+
+      get "/instances/HMR-0001/events"
+
+      expect(response).to have_http_status(:ok)
+      # occurred_at ASC wins over creation order: the backdated RECEIVED comes first.
+      expect(json["data"].map { |e| e["eventType"] }).to eq(%w[RECEIVED INSTALLED])
+    end
+
+    it "breaks ties on equal occurred_at deterministically across repeated queries", openapi: false do
+      part = create(:part_definition, part_number: "THE-HOMER-001")
+      instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
+      tied = Time.utc(2026, 5, 29, 10)
+      # Three events sharing the exact same occurred_at; UUID ids are random, so
+      # only the (occurred_at, id) tiebreaker can make the order stable.
+      3.times { create(:lifecycle_event, part_instance: instance, event_type: "INSPECTED", occurred_at: tied) }
+
+      get "/instances/HMR-0001/events"
+      first_order = json["data"].map { |e| e["id"] }
+
+      get "/instances/HMR-0001/events"
+      second_order = json["data"].map { |e| e["id"] }
+
+      expect(first_order.size).to eq(3)
+      expect(second_order).to eq(first_order)
+      # The deterministic order is ascending by id, matching the (occurred_at, id) scope.
+      expect(first_order).to eq(first_order.sort)
+    end
+
+    it "keeps tied-occurred_at rows stable across paginated page boundaries", openapi: false do
+      part = create(:part_definition, part_number: "THE-HOMER-001")
+      instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
+      tied = Time.utc(2026, 5, 29, 10)
+      5.times { create(:lifecycle_event, part_instance: instance, event_type: "INSPECTED", occurred_at: tied) }
+
+      get "/instances/HMR-0001/events", params: { page: 1, limit: 3 }
+      page_one = json["data"].map { |e| e["id"] }
+
+      get "/instances/HMR-0001/events", params: { page: 2, limit: 3 }
+      page_two = json["data"].map { |e| e["id"] }
+
+      # No row dropped or duplicated across the page boundary despite identical occurred_at.
+      expect((page_one & page_two)).to be_empty
+      expect((page_one + page_two).uniq.size).to eq(5)
+    end
+
     it "returns 404 for an unknown serial" do
       get "/instances/DOES-NOT-EXIST/events"
 
@@ -174,7 +231,14 @@ RSpec.describe "Instances", type: :request do
       expect(json["eventType"]).to eq("IN_ASSEMBLY")
       expect(json["actor"]).to eq("tech@factory.com")
       expect(json["occurredAt"]).to eq("2026-05-29T10:00:00.000Z")
+      expect(json["recordedAt"]).to be_present
       expect(instance.reload.current_status).to eq("IN_ASSEMBLY")
+
+      # Both timestamps land on the row: client-supplied occurred_at and server-set recorded_at.
+      event = instance.lifecycle_events.order(:recorded_at).last
+      expect(event.occurred_at).to eq(Time.utc(2026, 5, 29, 10))
+      expect(event.recorded_at).to be_present
+      expect(event.recorded_at.utc.year).to eq(Time.current.utc.year)
     end
 
     it "sets recorded_at server-side and ignores a client-supplied recordedAt" do
