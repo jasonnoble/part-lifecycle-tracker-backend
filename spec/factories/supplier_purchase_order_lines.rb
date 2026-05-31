@@ -12,12 +12,12 @@ FactoryBot.define do
 
     trait :partially_received do
       status { "PARTIALLY_RECEIVED" }
-      quantity_received { 10 }
+      quantity_received { (quantity * 0.2).round }
     end
 
     trait :received do
       status { "RECEIVED" }
-      quantity_received { 50 }
+      quantity_received { quantity }
     end
   end
 end
