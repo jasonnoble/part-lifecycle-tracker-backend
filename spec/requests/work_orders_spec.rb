@@ -77,6 +77,20 @@ RSpec.describe "Work Orders", type: :request do
       expect(json["steps"].first["childPartNumber"]).to eq("MUZZLE-001")
     end
 
+    it "returns 422 when partNumber is blank", openapi: false do
+      post "/work-orders", params: { serialNumber: "HMR-0047" }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
+    it "returns 422 when serialNumber is blank", openapi: false do
+      post "/work-orders", params: { partNumber: "THE-HOMER-001" }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
     it "returns 404 for an unknown partNumber" do
       post "/work-orders", params: {
         partNumber: "NOPE-999",
@@ -124,6 +138,17 @@ RSpec.describe "Work Orders", type: :request do
   end
 
   describe "GET /work-orders" do
+    it "lists all work orders when no status filter is given", openapi: false do
+      create(:work_order, part_definition: homer, part_instance: instance, status: "OPEN")
+      other_instance = create(:part_instance, part_definition: homer, serial_number: "HMR-8888")
+      create(:work_order, part_definition: homer, part_instance: other_instance, status: "COMPLETE")
+
+      get "/work-orders"
+
+      expect(response).to have_http_status(:ok)
+      expect(json["data"].length).to eq(2)
+    end
+
     it "lists work orders and filters by status" do
       open_wo = create(:work_order, part_definition: homer, part_instance: instance, status: "OPEN")
       other_instance = create(:part_instance, part_definition: homer, serial_number: "HMR-9999")

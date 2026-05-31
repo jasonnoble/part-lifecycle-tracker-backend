@@ -10,6 +10,6 @@ class WorkOrderSerializer
 
   has_many :work_order_steps, key: :steps, resource: WorkOrderStepSerializer
 
-  attribute(:created_at) { |wo| wo.created_at&.utc&.iso8601(3) }
-  attribute(:updated_at) { |wo| wo.updated_at&.utc&.iso8601(3) }
+  attribute(:created_at) { |wo| wo.created_at.utc.iso8601(3) }
+  attribute(:updated_at) { |wo| wo.updated_at.utc.iso8601(3) }
 end
