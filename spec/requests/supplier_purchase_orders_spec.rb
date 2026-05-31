@@ -75,10 +75,7 @@ RSpec.describe "Supplier purchase orders", type: :request do
 
   describe "GET /supplier-purchase-orders" do
     it "returns a paginated list" do
-      # Pin supplier_ids so the generated OpenAPI example is deterministic and
-      # doesn't churn as the global factory sequence advances in other specs.
-      create(:supplier_purchase_order, supplier_id: "VENDOR-0001")
-      create(:supplier_purchase_order, supplier_id: "VENDOR-0002")
+      create_list(:supplier_purchase_order, 2)
 
       get "/supplier-purchase-orders"
 

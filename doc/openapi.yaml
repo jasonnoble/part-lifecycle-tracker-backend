@@ -1562,14 +1562,14 @@ paths:
               example:
                 data:
                 - id: 00000000-0000-0000-0000-000000000000
-                  supplierId: VENDOR-0002
+                  supplierId: VENDOR-0000
                   status: OPEN
                   customerOrderId:
                   lines: []
                   createdAt: '2026-01-01T00:00:00.000Z'
                   updatedAt: '2026-01-01T00:00:00.000Z'
                 - id: 00000000-0000-0000-0000-000000000000
-                  supplierId: VENDOR-0001
+                  supplierId: VENDOR-0000
                   status: OPEN
                   customerOrderId:
                   lines: []
@@ -1893,7 +1893,7 @@ paths:
                 - updatedAt
               example:
                 id: 00000000-0000-0000-0000-000000000000
-                supplierId: VENDOR-0004
+                supplierId: VENDOR-0000
                 status: PARTIALLY_RECEIVED
                 customerOrderId:
                 lines:
