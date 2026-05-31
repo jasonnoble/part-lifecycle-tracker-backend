@@ -1837,9 +1837,14 @@ paths:
                 serials:
                 - HMR-0001
                 - HMR-0002
+              - lineId: 00000000-0000-0000-0000-000000000000
+                quantity: 1
+                serials:
+                - DOME-0001
       responses:
         '200':
-          description: marks PO PARTIALLY_RECEIVED when one of several lines is unreceived
+          description: 'receives multiple lines fully in one request: every line and
+            the PO go RECEIVED'
           content:
             application/json:
               schema:
@@ -1894,7 +1899,7 @@ paths:
               example:
                 id: 00000000-0000-0000-0000-000000000000
                 supplierId: VENDOR-0000
-                status: PARTIALLY_RECEIVED
+                status: RECEIVED
                 customerOrderId:
                 lines:
                 - id: 00000000-0000-0000-0000-000000000000
@@ -1905,8 +1910,8 @@ paths:
                   partName: La Cucaracha Horn
                 - id: 00000000-0000-0000-0000-000000000000
                   quantity: 1
-                  quantityReceived: 0
-                  status: ORDERED
+                  quantityReceived: 1
+                  status: RECEIVED
                   partNumber: DOME-XPT-001
                   partName: Transparent Dome
                 createdAt: '2026-01-01T00:00:00.000Z'
@@ -1929,7 +1934,8 @@ paths:
                 error: Couldn't find SupplierPurchaseOrder with 'id'="00000000-0000-0000-0000-000000000000"
                 code: NOT_FOUND
         '422':
-          description: returns 422 when a lineId does not belong to this PO
+          description: returns 422 and creates nothing when a serial is duplicated
+            across two lines in the same request
           content:
             application/json:
               schema:
@@ -1943,6 +1949,5 @@ paths:
                 - error
                 - code
               example:
-                error: lineId 00000000-0000-0000-0000-000000000000 does not belong
-                  to this purchase order
+                error: serials must be unique within the request
                 code: VALIDATION_FAILED

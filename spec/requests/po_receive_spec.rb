@@ -156,6 +156,52 @@ RSpec.describe "Supplier PO receive", type: :request do
       expect(po.reload.status).to eq("OPEN")
     end
 
+    it "receives multiple lines fully in one request: every line and the PO go RECEIVED" do
+      multi_po = create(:supplier_purchase_order)
+      multi_horn_line = create(:supplier_purchase_order_line, supplier_purchase_order: multi_po, part_definition: horn, quantity: 2, status: "ORDERED")
+      multi_dome_line = create(:supplier_purchase_order_line, supplier_purchase_order: multi_po, part_definition: dome, quantity: 1, status: "ORDERED")
+
+      expect {
+        post "/supplier-purchase-orders/#{multi_po.id}/receive", params: {
+          lines: [
+            { lineId: multi_horn_line.id, quantity: 2, serials: %w[HMR-0001 HMR-0002] },
+            { lineId: multi_dome_line.id, quantity: 1, serials: %w[DOME-0001] }
+          ]
+        }, as: :json
+      }.to change(PartInstance, :count).by(3)
+        .and change(LifecycleEvent, :count).by(3)
+        .and change(StockAuditLog, :count).by(2)
+
+      expect(response).to have_http_status(:ok)
+      expect(json["status"]).to eq("RECEIVED")
+      lines = json["lines"].index_by { |l| l["id"] }
+      expect(lines[multi_horn_line.id]["status"]).to eq("RECEIVED")
+      expect(lines[multi_dome_line.id]["status"]).to eq("RECEIVED")
+
+      expect(Stock.find_by(part_definition: horn).quantity_on_hand).to eq(2)
+      expect(Stock.find_by(part_definition: dome).quantity_on_hand).to eq(1)
+    end
+
+    it "returns 422 and creates nothing when a serial is duplicated across two lines in the same request" do
+      multi_po = create(:supplier_purchase_order)
+      multi_horn_line = create(:supplier_purchase_order_line, supplier_purchase_order: multi_po, part_definition: horn, quantity: 1, status: "ORDERED")
+      multi_dome_line = create(:supplier_purchase_order_line, supplier_purchase_order: multi_po, part_definition: dome, quantity: 1, status: "ORDERED")
+
+      expect {
+        post "/supplier-purchase-orders/#{multi_po.id}/receive", params: {
+          lines: [
+            { lineId: multi_horn_line.id, quantity: 1, serials: %w[DUP-0001] },
+            { lineId: multi_dome_line.id, quantity: 1, serials: %w[DUP-0001] }
+          ]
+        }, as: :json
+      }.to change(PartInstance, :count).by(0)
+        .and change(StockAuditLog, :count).by(0)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+      expect(multi_po.reload.status).to eq("OPEN")
+    end
+
     it "returns 404 when the PO does not exist" do
       post "/supplier-purchase-orders/00000000-0000-0000-0000-000000000000/receive", params: {
         lines: [ { lineId: horn_line.id, quantity: 1, serials: %w[HMR-0001] } ]
