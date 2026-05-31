@@ -15,10 +15,7 @@ Rails.application.routes.draw do
   end
 
   resources :instances, param: :serial, only: %i[index show create] do
-    member do
-      get "events", to: "instances#events_index"
-      post "events", to: "instances#events_create"
-    end
+    resources :events, only: %i[index create], module: :instances
   end
 
   # OpenAPI viewer (development only). The spec is generated from request specs

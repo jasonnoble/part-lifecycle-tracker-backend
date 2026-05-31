@@ -76,6 +76,8 @@ RSpec.describe "Instances", type: :request do
       expect(instance.lifecycle_events.count).to eq(1)
       event = instance.lifecycle_events.first
       expect(event.event_type).to eq("RECEIVED")
+      expect(event.actor).to eq("system")
+      expect(event.occurred_at).to be_present
       expect(event.recorded_at).to be_present
     end
 
@@ -130,12 +132,9 @@ RSpec.describe "Instances", type: :request do
     it "returns the event log ordered by occurred_at ASC then id" do
       part = create(:part_definition, part_number: "THE-HOMER-001")
       instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
-      create(:lifecycle_event, part_instance: instance, event_type: "RECEIVED",
-                               occurred_at: Time.utc(2026, 5, 28, 10))
-      create(:lifecycle_event, part_instance: instance, event_type: "INSTALLED",
-                               occurred_at: Time.utc(2026, 5, 30, 10))
-      create(:lifecycle_event, part_instance: instance, event_type: "IN_ASSEMBLY",
-                               occurred_at: Time.utc(2026, 5, 29, 10))
+      create(:lifecycle_event, :received, part_instance: instance, occurred_at: Time.utc(2026, 5, 28, 10))
+      create(:lifecycle_event, :installed, part_instance: instance, occurred_at: Time.utc(2026, 5, 30, 10))
+      create(:lifecycle_event, :in_assembly, part_instance: instance, occurred_at: Time.utc(2026, 5, 29, 10))
 
       get "/instances/HMR-0001/events"
 

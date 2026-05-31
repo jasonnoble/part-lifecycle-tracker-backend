@@ -6,5 +6,11 @@ FactoryBot.define do
     notes { nil }
     metadata { {} }
     occurred_at { Time.current }
+
+    # A trait per event type (:received, :inspected, :in_assembly, :installed,
+    # :validated, :certified, :ordered), kept in sync with the model constant.
+    LifecycleEvent::EVENT_TYPES.each do |type|
+      trait(type.downcase.to_sym) { event_type { type } }
+    end
   end
 end

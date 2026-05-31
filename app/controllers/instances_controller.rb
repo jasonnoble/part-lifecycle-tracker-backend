@@ -1,4 +1,6 @@
 class InstancesController < ApplicationController
+  before_action :set_instance, only: :show
+
   def index
     scope = PartInstance.includes(:part_definition)
     scope = scope.for_part_number(params[:part_number]) if params[:part_number].present?
@@ -14,8 +16,7 @@ class InstancesController < ApplicationController
   end
 
   def show
-    instance = find_instance!
-    render json: PartInstanceSerializer.new(instance).serializable_hash
+    render json: PartInstanceSerializer.new(@instance).serializable_hash
   end
 
   def create
@@ -42,46 +43,9 @@ class InstancesController < ApplicationController
     render_validation_errors(e.record)
   end
 
-  def events_index
-    instance = find_instance!
-    @pagy, events = pagy(:offset, instance.lifecycle_events.chronological)
-
-    render json: {
-      data: LifecycleEventSerializer.new(events).serializable_hash,
-      meta: pagination_meta(@pagy)
-    }
-  end
-
-  def events_create
-    instance = find_instance!
-    event = instance.lifecycle_events.new(event_params)
-
-    # recorded_at is ALWAYS server-set and never accepted from the client.
-    event.recorded_at = Time.current
-
-    PartInstance.transaction do
-      event.save!
-      instance.update!(current_status: event.event_type)
-    end
-
-    render json: LifecycleEventSerializer.new(event).serializable_hash, status: :created
-  rescue ActiveRecord::RecordInvalid => e
-    render_validation_errors(e.record)
-  end
-
   private
 
-  def find_instance!
-    PartInstance.includes(:part_definition).find_by!(serial_number: params[:serial])
-  end
-
-  def event_params
-    {
-      event_type: params[:eventType],
-      actor: params[:actor],
-      notes: params[:notes],
-      metadata: params[:metadata],
-      occurred_at: params[:occurredAt]
-    }
+  def set_instance
+    @instance = PartInstance.includes(:part_definition).find_by!(serial_number: params[:serial])
   end
 end

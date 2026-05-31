@@ -161,79 +161,13 @@ paths:
               example:
                 error: Serial number has already been taken
                 code: VALIDATION_FAILED
-  "/instances/{serial}":
+  "/instances/{instance_serial}/events":
     get:
-      summary: show
+      summary: index
       tags:
-      - Instance
+      - Instances::Event
       parameters:
-      - name: serial
-        in: path
-        required: true
-        schema:
-          type: string
-        example: DOES-NOT-EXIST
-      responses:
-        '200':
-          description: returns the instance with derived current_status
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  serialNumber:
-                    type: string
-                  currentStatus:
-                    type: string
-                  partNumber:
-                    type: string
-                  createdAt:
-                    type: string
-                    format: date-time
-                  updatedAt:
-                    type: string
-                    format: date-time
-                required:
-                - id
-                - serialNumber
-                - currentStatus
-                - partNumber
-                - createdAt
-                - updatedAt
-              example:
-                id: 00000000-0000-0000-0000-000000000000
-                serialNumber: HMR-0001
-                currentStatus: INSTALLED
-                partNumber: THE-HOMER-001
-                createdAt: '2026-01-01T00:00:00.000Z'
-                updatedAt: '2026-01-01T00:00:00.000Z'
-        '404':
-          description: returns 404 for an unknown serial
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  code:
-                    type: string
-                required:
-                - error
-                - code
-              example:
-                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
-                  = $1]
-                code: NOT_FOUND
-  "/instances/{serial}/events":
-    get:
-      summary: events_index
-      tags:
-      - Instance
-      parameters:
-      - name: serial
+      - name: instance_serial
         in: path
         required: true
         schema:
@@ -339,11 +273,11 @@ paths:
                   = $1]
                 code: NOT_FOUND
     post:
-      summary: events_create
+      summary: create
       tags:
-      - Instance
+      - Instances::Event
       parameters:
-      - name: serial
+      - name: instance_serial
         in: path
         required: true
         schema:
@@ -469,6 +403,72 @@ paths:
               example:
                 error: Occurred at can't be blank
                 code: VALIDATION_FAILED
+  "/instances/{serial}":
+    get:
+      summary: show
+      tags:
+      - Instance
+      parameters:
+      - name: serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns the instance with derived current_status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  serialNumber:
+                    type: string
+                  currentStatus:
+                    type: string
+                  partNumber:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - serialNumber
+                - currentStatus
+                - partNumber
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                serialNumber: HMR-0001
+                currentStatus: INSTALLED
+                partNumber: THE-HOMER-001
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
   "/parts":
     get:
       summary: index
@@ -1130,7 +1130,7 @@ paths:
               example:
                 id: 00000000-0000-0000-0000-000000000000
                 partNumber: ST-003
-                name: Part 23
+                name: Example Part
                 description: A part definition for testing.
                 revision: A
                 status: OBSOLETE
