@@ -2332,6 +2332,172 @@ paths:
               example:
                 error: Couldn't find WorkOrder with 'id'="00000000-0000-0000-0000-000000000000"
                 code: NOT_FOUND
+  "/work-orders/{id}/complete":
+    post:
+      summary: complete
+      tags:
+      - WorkOrder
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            example: {}
+      responses:
+        '200':
+          description: completes the work order and appends a CERTIFIED lifecycle
+            event to the part instance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          nullable: true
+                        installedActor:
+                          nullable: true
+                        validatedActor:
+                          nullable: true
+                        certifiedActor:
+                          nullable: true
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: COMPLETE
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: CERTIFIED
+                  installedPartInstanceId:
+                  installedActor:
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt:
+                  validatedAt:
+                  certifiedAt:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: CERTIFIED
+                  installedPartInstanceId:
+                  installedActor:
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: DOME-TRANS-001
+                  childPartName: Transparent Dome
+                  installedAt:
+                  validatedAt:
+                  certifiedAt:
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown work order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find WorkOrder with 'id'="00000000-0000-0000-0000-000000000000"
+                code: NOT_FOUND
+        '422':
+          description: returns 422 STEPS_NOT_CERTIFIED and leaves status unchanged
+            when a step is not CERTIFIED
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: All steps must be CERTIFIED before the work order can be completed
+                code: STEPS_NOT_CERTIFIED
   "/work-orders/{id}/steps/{step_id}/certify":
     post:
       summary: certify
