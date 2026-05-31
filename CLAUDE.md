@@ -73,6 +73,7 @@ CI (`.github/workflows/ci.yml`) runs four jobs that must pass: `brakeman`, `bund
 - **RSpec + FactoryBot**, against a **real PostgreSQL** test database (`part_lifecycle_tracker_test`) — the DB layer is never mocked (it's where the invariants live). `rails_helper` calls `maintain_test_schema!`, so run pending migrations before testing.
 - `factory_bot` syntax methods are included globally (`create`, `build`, etc.).
 - Transactional fixtures are on.
+- **Coverage:** SimpleCov runs on every `rspec` (HTML + `coverage/coverage.json`, branch coverage on; `coverage/` is gitignored). The `undercover` gate (`bundle exec undercover --compare <base>`, in `bin/ci` and the CI `rspec` job) fails when new/changed code is uncovered — every PR must cover the code it touches. `SimpleCov.minimum_coverage` in `spec/spec_helper.rb` is a coarse floor (ratchet-up only; never lower it).
 
 ## Seeds
 

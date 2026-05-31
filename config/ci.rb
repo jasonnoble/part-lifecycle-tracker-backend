@@ -8,6 +8,11 @@ CI.run do
   step "Tests: RSpec (regenerates OpenAPI doc)", "OPENAPI=1 bundle exec rspec"
   step "Docs: OpenAPI doc is committed and current", "git diff --exit-code doc/openapi.yaml"
 
+  # Diff-coverage gate: fails when changed/added Ruby blocks since `main` lack
+  # coverage. Reads coverage/coverage.json from the rspec run above. Exits 0 when
+  # there are no uncovered changes, so a clean local run passes.
+  step "Coverage: undercover", "bundle exec undercover --compare main"
+
   step "Style: Ruby", "bin/rubocop"
 
   step "Security: Gem audit", "bin/bundler-audit"

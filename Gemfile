@@ -50,6 +50,10 @@ group :development, :test do
 
   # Generates doc/openapi.yaml from request specs (run with OPENAPI=1); no-op otherwise.
   gem "rspec-openapi", "~> 0.18"
+
+  # Code coverage measurement (SimpleCov) + per-PR diff coverage gate (undercover).
+  gem "simplecov", require: false
+  gem "undercover"
 end
 
 gem "alba", "~> 3.10"
