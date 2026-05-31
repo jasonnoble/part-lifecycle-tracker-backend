@@ -11,6 +11,12 @@
 #     per-line marker (reserve_reason) signals the reservation already happened.
 #   - PO-line idempotency: at most one open NEEDS_ORDERING line per
 #     customer_order + part_definition; a re-run finds and leaves it alone.
+#
+# No work order is created here: work_orders.part_instance_id is NOT NULL, but
+# reserving fungible stock does not pick a specific serialized instance, so a
+# valid WorkOrder cannot be created. Per the JAS-42 AC we reserve + track
+# fulfillment via the customer-order-line-keyed StockAuditLog and defer
+# work-order creation until an instance is determinable (the JAS-35 flow).
 class BomExplosionService
   def initialize(customer_order_line)
     @line = customer_order_line
