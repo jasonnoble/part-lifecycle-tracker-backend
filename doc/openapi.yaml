@@ -403,6 +403,237 @@ paths:
               example:
                 error: Occurred at can't be blank
                 code: VALIDATION_FAILED
+  "/instances/{instance_serial}/tests":
+    get:
+      summary: index
+      tags:
+      - Instances::Test
+      parameters:
+      - name: instance_serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns the test records ordered by occurred_at DESC with camelCase
+            records and meta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        testType:
+                          type: string
+                        result:
+                          type: string
+                        notes:
+                          nullable: true
+                        conductedBy:
+                          type: string
+                        occurredAt:
+                          type: string
+                          format: date-time
+                        recordedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - testType
+                      - result
+                      - notes
+                      - conductedBy
+                      - occurredAt
+                      - recordedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  testType: THIRD
+                  result: PASS
+                  notes:
+                  conductedBy: qa@factory.com
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  testType: SECOND
+                  result: PASS
+                  notes:
+                  conductedBy: qa@factory.com
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  testType: FIRST
+                  result: PASS
+                  notes:
+                  conductedBy: qa@factory.com
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 3
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
+    post:
+      summary: create
+      tags:
+      - Instances::Test
+      parameters:
+      - name: instance_serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                testType:
+                  type: string
+                result:
+                  type: string
+                notes:
+                  type: string
+                conductedBy:
+                  type: string
+                occurredAt:
+                  type: string
+                  format: date-time
+                recordedAt:
+                  type: string
+                  format: date-time
+              required:
+              - testType
+              - result
+              - conductedBy
+              - occurredAt
+            example:
+              testType: HORN_SEQUENCE
+              result: PASS
+              notes: All 7 bars played
+              conductedBy: qa@factory.com
+              occurredAt: '2026-01-01T00:00:00.000Z'
+              recordedAt: '2026-01-01T00:00:00.000Z'
+      responses:
+        '201':
+          description: sets recorded_at server-side and ignores a client-supplied
+            recordedAt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  testType:
+                    type: string
+                  result:
+                    type: string
+                  notes:
+                    type: string
+                    nullable: true
+                  conductedBy:
+                    type: string
+                  occurredAt:
+                    type: string
+                    format: date-time
+                  recordedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - testType
+                - result
+                - notes
+                - conductedBy
+                - occurredAt
+                - recordedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                testType: HORN_SEQUENCE
+                result: PASS
+                notes:
+                conductedBy: qa@factory.com
+                occurredAt: '2026-01-01T00:00:00.000Z'
+                recordedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
+        '422':
+          description: returns 422 when a required field is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Test type can't be blank
+                code: VALIDATION_FAILED
   "/instances/{serial}":
     get:
       summary: show

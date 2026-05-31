@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
   resources :instances, param: :serial, only: %i[index show create] do
     resources :events, only: %i[index create], module: :instances
+    resources :tests, only: %i[index create], module: :instances
   end
 
   # OpenAPI viewer (development only). The spec is generated from request specs
