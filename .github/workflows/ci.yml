@@ -79,7 +79,14 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
 
-      - name: Run tests
-        run: bundle exec rspec
+      - name: Run tests and regenerate OpenAPI doc
+        run: OPENAPI=1 bundle exec rspec
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/part_lifecycle_tracker_test
+
+      - name: Verify the committed OpenAPI doc is up to date
+        run: |
+          git diff --exit-code doc/openapi.yaml || {
+            echo "::error::doc/openapi.yaml is out of date. Run 'OPENAPI=1 bundle exec rspec' and commit the result."
+            exit 1
+          }
