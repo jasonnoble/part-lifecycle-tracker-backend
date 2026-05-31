@@ -26,7 +26,13 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :work_orders, path: "work-orders", only: %i[index show create]
+  resources :work_orders, path: "work-orders", only: %i[index show create] do
+    member do
+      post "steps/:step_id/install", to: "work_order_steps#install"
+      post "steps/:step_id/validate", to: "work_order_steps#validate_step"
+      post "steps/:step_id/certify", to: "work_order_steps#certify"
+    end
+  end
 
   # OpenAPI viewer (development only). The spec is generated from request specs
   # via `OPENAPI=1 bundle exec rspec`; see doc/openapi.yaml.

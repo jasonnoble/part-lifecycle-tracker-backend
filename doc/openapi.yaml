@@ -2332,3 +2332,513 @@ paths:
               example:
                 error: Couldn't find WorkOrder with 'id'="00000000-0000-0000-0000-000000000000"
                 code: NOT_FOUND
+  "/work-orders/{id}/steps/{step_id}/certify":
+    post:
+      summary: certify
+      tags:
+      - WorkOrderStep
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actor:
+                  type: string
+              required:
+              - actor
+            example:
+              actor: quinn@factory.com
+      responses:
+        '200':
+          description: certifies the step when the actor has the QA role
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          type: string
+                        installedActor:
+                          type: string
+                        validatedActor:
+                          type: string
+                        certifiedActor:
+                          type: string
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: OPEN
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: CERTIFIED
+                  installedPartInstanceId: 00000000-0000-0000-0000-000000000000
+                  installedActor: jamie@factory.com
+                  validatedActor: riley@factory.com
+                  certifiedActor: quinn@factory.com
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt: '2026-01-01T00:00:00.000Z'
+                  validatedAt: '2026-01-01T00:00:00.000Z'
+                  certifiedAt: '2026-01-01T00:00:00.000Z'
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '403':
+          description: returns 403 FORBIDDEN when the actor is not QA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Actor riley@factory.com is not authorized to certify (QA role
+                  required)
+                code: FORBIDDEN
+        '409':
+          description: returns 409 INVALID_STEP_STATE when the step is not VALIDATED
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Step is not VALIDATED (current: INSTALLED)'
+                code: INVALID_STEP_STATE
+  "/work-orders/{id}/steps/{step_id}/install":
+    post:
+      summary: install
+      tags:
+      - WorkOrderStep
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                installedSerial:
+                  type: string
+                actor:
+                  type: string
+              required:
+              - installedSerial
+              - actor
+            example:
+              installedSerial: DOME-0001
+              actor: jamie@factory.com
+      responses:
+        '200':
+          description: allows the dependent step once the prerequisite step is certified
+            (muzzle before dome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          type: string
+                        installedActor:
+                          type: string
+                        validatedActor:
+                          nullable: true
+                          type: string
+                        certifiedActor:
+                          nullable: true
+                          type: string
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: OPEN
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: CERTIFIED
+                  installedPartInstanceId: 00000000-0000-0000-0000-000000000000
+                  installedActor: jamie@factory.com
+                  validatedActor: riley@factory.com
+                  certifiedActor: quinn@factory.com
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt: '2026-01-01T00:00:00.000Z'
+                  validatedAt: '2026-01-01T00:00:00.000Z'
+                  certifiedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: INSTALLED
+                  installedPartInstanceId: 00000000-0000-0000-0000-000000000000
+                  installedActor: jamie@factory.com
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: DOME-TRANS-001
+                  childPartName: Transparent Dome
+                  installedAt: '2026-01-01T00:00:00.000Z'
+                  validatedAt:
+                  certifiedAt:
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown step
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find WorkOrderStep with 'id'="00000000-0000-0000-0000-000000000000"
+                  [WHERE "work_order_steps"."work_order_id" = $1]
+                code: NOT_FOUND
+        '409':
+          description: returns 409 INVALID_STEP_STATE when the step is not PENDING
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Step is not PENDING (current: INSTALLED)'
+                code: INVALID_STEP_STATE
+        '422':
+          description: returns 422 when the installedSerial is unknown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Unknown installedSerial: NO-SUCH-SN'
+                code: VALIDATION_FAILED
+  "/work-orders/{id}/steps/{step_id}/validate":
+    post:
+      summary: validate_step
+      tags:
+      - WorkOrderStep
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actor:
+                  type: string
+              required:
+              - actor
+            example:
+              actor: riley@factory.com
+      responses:
+        '200':
+          description: validates the step by a different actor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          type: string
+                        installedActor:
+                          type: string
+                        validatedActor:
+                          type: string
+                        certifiedActor:
+                          nullable: true
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: OPEN
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: VALIDATED
+                  installedPartInstanceId: 00000000-0000-0000-0000-000000000000
+                  installedActor: jamie@factory.com
+                  validatedActor: riley@factory.com
+                  certifiedActor:
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt: '2026-01-01T00:00:00.000Z'
+                  validatedAt: '2026-01-01T00:00:00.000Z'
+                  certifiedAt:
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '409':
+          description: returns 409 INVALID_STEP_STATE when the step is not INSTALLED
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Step is not INSTALLED (current: PENDING)'
+                code: INVALID_STEP_STATE
