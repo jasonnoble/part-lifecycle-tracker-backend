@@ -1951,3 +1951,384 @@ paths:
               example:
                 error: serials must be unique within the request
                 code: VALIDATION_FAILED
+  "/work-orders":
+    get:
+      summary: index
+      tags:
+      - WorkOrder
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: OPEN
+      responses:
+        '200':
+          description: lists work orders and filters by status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                        customerOrderLineId:
+                          nullable: true
+                        partNumber:
+                          type: string
+                        serialNumber:
+                          type: string
+                        steps:
+                          type: array
+                          items: {}
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - status
+                      - customerOrderLineId
+                      - partNumber
+                      - serialNumber
+                      - steps
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  status: OPEN
+                  customerOrderLineId:
+                  partNumber: THE-HOMER-001
+                  serialNumber: HMR-0047
+                  steps: []
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 1
+    post:
+      summary: create
+      tags:
+      - WorkOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                partNumber:
+                  type: string
+                serialNumber:
+                  type: string
+                customerOrderLineId:
+                  type: string
+              required:
+              - partNumber
+              - serialNumber
+            example:
+              partNumber: THE-HOMER-001
+              serialNumber: HMR-0047
+              customerOrderLineId: 00000000-0000-0000-0000-000000000000
+      responses:
+        '201':
+          description: allows a new work order when the existing one is COMPLETE
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                    type: string
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          nullable: true
+                        installedActor:
+                          nullable: true
+                        validatedActor:
+                          nullable: true
+                        certifiedActor:
+                          nullable: true
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: OPEN
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: PENDING
+                  installedPartInstanceId:
+                  installedActor:
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt:
+                  validatedAt:
+                  certifiedAt:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: PENDING
+                  installedPartInstanceId:
+                  installedActor:
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: DOME-TRANS-001
+                  childPartName: Transparent Dome
+                  installedAt:
+                  validatedAt:
+                  certifiedAt:
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown serialNumber
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Unknown serialNumber: MISSING-SN'
+                code: NOT_FOUND
+        '422':
+          description: returns 422 OPEN_WORK_ORDER_EXISTS when the serial already
+            has a non-COMPLETE work order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: serialNumber HMR-0047 already has an open work order
+                code: OPEN_WORK_ORDER_EXISTS
+  "/work-orders/{id}":
+    get:
+      summary: show
+      tags:
+      - WorkOrder
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      responses:
+        '200':
+          description: returns the work order with its steps
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  customerOrderLineId:
+                    nullable: true
+                  partNumber:
+                    type: string
+                  serialNumber:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        bomItemId:
+                          type: string
+                        status:
+                          type: string
+                        installedPartInstanceId:
+                          nullable: true
+                        installedActor:
+                          nullable: true
+                        validatedActor:
+                          nullable: true
+                        certifiedActor:
+                          nullable: true
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        installedAt:
+                          type: string
+                          format: date-time
+                        validatedAt:
+                          type: string
+                          format: date-time
+                        certifiedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - bomItemId
+                      - status
+                      - installedPartInstanceId
+                      - installedActor
+                      - validatedActor
+                      - certifiedActor
+                      - childPartNumber
+                      - childPartName
+                      - installedAt
+                      - validatedAt
+                      - certifiedAt
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - status
+                - customerOrderLineId
+                - partNumber
+                - serialNumber
+                - steps
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                status: OPEN
+                customerOrderLineId:
+                partNumber: THE-HOMER-001
+                serialNumber: HMR-0047
+                steps:
+                - id: 00000000-0000-0000-0000-000000000000
+                  bomItemId: 00000000-0000-0000-0000-000000000000
+                  status: PENDING
+                  installedPartInstanceId:
+                  installedActor:
+                  validatedActor:
+                  certifiedActor:
+                  childPartNumber: MUZZLE-001
+                  childPartName: Muzzle
+                  installedAt:
+                  validatedAt:
+                  certifiedAt:
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find WorkOrder with 'id'="00000000-0000-0000-0000-000000000000"
+                code: NOT_FOUND

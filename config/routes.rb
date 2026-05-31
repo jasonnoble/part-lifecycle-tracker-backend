@@ -26,6 +26,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :work_orders, path: "work-orders", only: %i[index show create]
+
   # OpenAPI viewer (development only). The spec is generated from request specs
   # via `OPENAPI=1 bundle exec rspec`; see doc/openapi.yaml.
   if Rails.env.development?
