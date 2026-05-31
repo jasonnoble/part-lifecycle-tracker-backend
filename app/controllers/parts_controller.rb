@@ -42,7 +42,29 @@ class PartsController < ApplicationController
     end
   end
 
+  def update_status
+    part = find_part!
+    target = params[:status].to_s
+    event = STATUS_EVENTS[target]
+
+    if event.nil? || !part.public_send("may_#{event}?")
+      return render_error(
+        "Cannot transition from #{part.status} to #{target.presence || 'nil'}",
+        "INVALID_TRANSITION",
+        :unprocessable_content
+      )
+    end
+
+    part.public_send("#{event}!")
+    render json: PartDefinitionSerializer.new(part).serializable_hash
+  end
+
   private
+
+  STATUS_EVENTS = {
+    "RELEASED" => :release,
+    "OBSOLETE" => :obsolete
+  }.freeze
 
   def find_part!
     PartDefinition.find_by!(part_number: params[:part_number])
