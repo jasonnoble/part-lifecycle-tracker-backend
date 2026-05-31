@@ -143,5 +143,65 @@ RSpec.describe "Part context", type: :request do
       expect(response).to have_http_status(:not_found)
       expect(json["code"]).to eq("NOT_FOUND")
     end
+
+    # JAS-47 gap: with several events sharing the SAME occurred_at, ordering must
+    # still be deterministic. The builder breaks ties with `id: :desc`, so the
+    # most recently created row (highest UUID v?) is NOT a safe tie-break — we
+    # assert the explicit id DESC contract by reading the served order back and
+    # comparing it to the same secondary sort applied to the real rows.
+    it "breaks recentEvents ties deterministically by id DESC on equal occurred_at", openapi: false do
+      part = create(:part_definition, :released, part_number: "TIE-001", name: "Tie Part", revision: "A")
+      instance = create(:part_instance, part_definition: part, current_status: "RECEIVED")
+
+      tie = Time.utc(2026, 5, 28, 12, 0, 0)
+      # Six events, all at the identical instant, distinguishable only by notes.
+      6.times { |i| create(:lifecycle_event, part_instance: instance, occurred_at: tie, notes: "tie #{i}") }
+
+      get "/parts/TIE-001/context"
+
+      expect(response).to have_http_status(:ok)
+
+      # Expected order computed from the REAL rows using the builder's contract:
+      # occurred_at DESC, then id DESC. Capped at 5.
+      expected_notes =
+        LifecycleEvent
+          .where(part_instance: instance)
+          .order(occurred_at: :desc, id: :desc)
+          .limit(5)
+          .pluck(:notes)
+
+      served_notes = json["recentEvents"].map { |e| e["notes"] }
+      expect(served_notes).to eq(expected_notes)
+      expect(served_notes.size).to eq(5)
+      # Sanity: the tie-break actually had to do work (not already occurred_at-sorted).
+      expect(served_notes.uniq.size).to eq(5)
+    end
+
+    # JAS-47 gap: an OPEN PO whose only line is for a DIFFERENT part must NOT
+    # inflate openPurchaseOrders. Exercises the part_definition_id line filter.
+    it "excludes open POs whose lines are for a different part", openapi: false do
+      part = create(:part_definition, :released, part_number: "TARGET-001", name: "Target Part")
+      other = create(:part_definition, part_number: "OTHER-001", name: "Other Part")
+
+      # OPEN PO for THIS part — should count.
+      mine = create(:supplier_purchase_order, :open)
+      create(:supplier_purchase_order_line, supplier_purchase_order: mine, part_definition: part)
+
+      # OPEN PO for a DIFFERENT part — must NOT count.
+      theirs = create(:supplier_purchase_order, :open)
+      create(:supplier_purchase_order_line, supplier_purchase_order: theirs, part_definition: other)
+
+      get "/parts/TARGET-001/context"
+
+      expect(response).to have_http_status(:ok)
+
+      expected_count =
+        SupplierPurchaseOrder
+          .where(status: %w[OPEN PARTIALLY_RECEIVED])
+          .where(id: SupplierPurchaseOrderLine.where(part_definition_id: part.id).select(:supplier_purchase_order_id))
+          .count
+      expect(expected_count).to eq(1)
+      expect(json["openPurchaseOrders"]).to eq(expected_count)
+    end
   end
 end
