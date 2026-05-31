@@ -1,0 +1,712 @@
+---
+openapi: 3.0.3
+info:
+  title: Part Lifecycle Tracker API
+  version: 0.1.0
+  description: Tracks aircraft/engine parts from design through manufacture and test.
+    Spec is generated from RSpec request specs (no hand-written DSL).
+servers:
+- url: http://localhost:3000
+paths:
+  "/parts":
+    get:
+      summary: index
+      tags:
+      - Part
+      responses:
+        '200':
+          description: returns an empty data array with meta when there are no parts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        partNumber:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        revision:
+                          type: string
+                        status:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - partNumber
+                      - name
+                      - description
+                      - revision
+                      - status
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data: []
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 0
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        example: 2
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+        example: 2
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+        example: homer
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: RELEASED
+    post:
+      summary: create
+      tags:
+      - Part
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                part_number:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                revision:
+                  type: string
+              required:
+              - part_number
+              - name
+              - description
+              - revision
+            example:
+              part_number: NEW-001
+              name: New Part
+              description: desc
+              revision: A
+      responses:
+        '201':
+          description: creates a part and returns 201 with the record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  partNumber:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  revision:
+                    type: string
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - partNumber
+                - name
+                - description
+                - revision
+                - status
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                partNumber: NEW-001
+                name: New Part
+                description: desc
+                revision: A
+                status: DRAFT
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '422':
+          description: returns 422 on duplicate part_number
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Part number has already been taken
+                code: VALIDATION_FAILED
+  "/parts/{part_number}":
+    get:
+      summary: show
+      tags:
+      - Part
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns the part by part_number
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  partNumber:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  revision:
+                    type: string
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - partNumber
+                - name
+                - description
+                - revision
+                - status
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                partNumber: FIND-001
+                name: Findable
+                description: A part definition for testing.
+                revision: A
+                status: DRAFT
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 with error shape when not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
+    patch:
+      summary: update
+      tags:
+      - Part
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: NOPE-001
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                revision:
+                  type: string
+                status:
+                  type: string
+            example:
+              name: Renamed
+              description: New desc
+              revision: B
+              status: RELEASED
+      responses:
+        '200':
+          description: ignores a status param without erroring
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  partNumber:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  revision:
+                    type: string
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - partNumber
+                - name
+                - description
+                - revision
+                - status
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                partNumber: UPD-004
+                name: Renamed
+                description: A part definition for testing.
+                revision: A
+                status: DRAFT
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 when the part does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
+        '422':
+          description: returns 422 REVISION_LOCKED when changing revision on a non-DRAFT
+            part
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Revision cannot be changed on a non-draft part
+                code: REVISION_LOCKED
+  "/parts/{part_number}/bom":
+    get:
+      summary: index
+      tags:
+      - BomItem
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: ASSY-001
+      responses:
+        '200':
+          description: soft deletes and the item still appears in a subsequent GET
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        quantity:
+                          type: integer
+                        childPartNumber:
+                          type: string
+                        childPartName:
+                          type: string
+                        deletedAt:
+                          type: string
+                          format: date-time
+                        dependencies:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              prerequisiteBomItemId:
+                                type: string
+                                nullable: true
+                              prerequisitePartNumber:
+                                type: string
+                                nullable: true
+                      required:
+                      - id
+                      - quantity
+                      - childPartNumber
+                      - childPartName
+                      - deletedAt
+                      - dependencies
+                required:
+                - data
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  quantity: 2
+                  childPartNumber: HORN-LCC-001
+                  childPartName: Horn
+                  deletedAt: '2026-01-01T00:00:00.000Z'
+                  dependencies: []
+        '404':
+          description: returns 404 when the parent part does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
+    post:
+      summary: create
+      tags:
+      - BomItem
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: NOPE-001
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                childPartNumber:
+                  type: string
+                quantity:
+                  type: string
+                prerequisites:
+                  type: array
+                  items:
+                    type: string
+              required:
+              - childPartNumber
+              - quantity
+            example:
+              childPartNumber: DOME-001
+              quantity: '1'
+              prerequisites:
+              - 00000000-0000-0000-0000-000000000000
+      responses:
+        '201':
+          description: embeds dependencies when prerequisites are passed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  quantity:
+                    type: integer
+                  childPartNumber:
+                    type: string
+                  childPartName:
+                    type: string
+                  deletedAt:
+                    type: string
+                    format: date-time
+                  dependencies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        prerequisiteBomItemId:
+                          type: string
+                        prerequisitePartNumber:
+                          type: string
+                      required:
+                      - prerequisiteBomItemId
+                      - prerequisitePartNumber
+                required:
+                - id
+                - quantity
+                - childPartNumber
+                - childPartName
+                - deletedAt
+                - dependencies
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                quantity: 1
+                childPartNumber: DOME-001
+                childPartName: Dome
+                deletedAt:
+                dependencies:
+                - prerequisiteBomItemId: 00000000-0000-0000-0000-000000000000
+                  prerequisitePartNumber: MUZZLE-001
+        '404':
+          description: returns 404 when the parent part does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
+        '422':
+          description: returns 422 CHILD_NOT_FOUND when childPartNumber does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Child part not found
+                code: CHILD_NOT_FOUND
+  "/parts/{part_number}/bom/{bom_item_id}":
+    delete:
+      summary: destroy
+      tags:
+      - BomItem
+      parameters:
+      - name: bom_item_id
+        in: path
+        required: true
+        schema:
+          type: string
+        example: 00000000-0000-0000-0000-000000000000
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: ASSY-001
+      responses:
+        '404':
+          description: returns 404 when the bom item does not belong to the part
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find BomItem with 'id'="00000000-0000-0000-0000-000000000000"
+                  [WHERE "bom_items"."parent_part_definition_id" = $1]
+                code: NOT_FOUND
+  "/parts/{part_number}/status":
+    post:
+      summary: update_status
+      tags:
+      - Part
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: NOPE-999
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+              required:
+              - status
+            example:
+              status: OBSOLETE
+      responses:
+        '200':
+          description: transitions DRAFT -> OBSOLETE with 200
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  partNumber:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  revision:
+                    type: string
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - partNumber
+                - name
+                - description
+                - revision
+                - status
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                partNumber: ST-003
+                name: Part 9
+                description: A part definition for testing.
+                revision: A
+                status: OBSOLETE
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 NOT_FOUND for a missing part
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
+        '422':
+          description: rejects an unrecognized status string with 422 INVALID_TRANSITION
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Cannot transition from DRAFT to BOGUS
+                code: INVALID_TRANSITION

@@ -14,6 +14,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # OpenAPI viewer (development only). The spec is generated from request specs
+  # via `OPENAPI=1 bundle exec rspec`; see doc/openapi.yaml.
+  if Rails.env.development?
+    get "/api-docs", to: "api_docs#index"
+    get "/api-docs/openapi.yaml", to: "api_docs#spec"
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
