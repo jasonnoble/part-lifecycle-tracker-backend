@@ -1299,6 +1299,104 @@ paths:
                 error: Couldn't find BomItem with 'id'="00000000-0000-0000-0000-000000000000"
                   [WHERE "bom_items"."parent_part_definition_id" = $1]
                 code: NOT_FOUND
+  "/parts/{part_number}/instances":
+    get:
+      summary: instances
+      tags:
+      - Part
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: NOPE-001
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: CERTIFIED
+      responses:
+        '200':
+          description: does not include instances of a different part
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        serialNumber:
+                          type: string
+                        currentStatus:
+                          type: string
+                        partNumber:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - serialNumber
+                      - currentStatus
+                      - partNumber
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  serialNumber: HMR-0001
+                  currentStatus: RECEIVED
+                  partNumber: HOMER-001
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 1
+        '404':
+          description: returns 404 when the part does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
   "/parts/{part_number}/status":
     post:
       summary: update_status

@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   resources :parts, param: :part_number, only: %i[index show create update] do
     member do
       post :status, action: :update_status
+      get "instances", to: "parts#instances"
       get "bom", to: "bom_items#index"
       post "bom", to: "bom_items#create"
       delete "bom/:bom_item_id", to: "bom_items#destroy"
