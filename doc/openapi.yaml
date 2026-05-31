@@ -8,6 +8,467 @@ info:
 servers:
 - url: http://localhost:3000
 paths:
+  "/instances":
+    get:
+      summary: index
+      tags:
+      - Instance
+      responses:
+        '200':
+          description: combines part_number and status filters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        serialNumber:
+                          type: string
+                        currentStatus:
+                          type: string
+                        partNumber:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - serialNumber
+                      - currentStatus
+                      - partNumber
+                      - createdAt
+                      - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  serialNumber: HMR-0001
+                  currentStatus: INSTALLED
+                  partNumber: THE-HOMER-001
+                  createdAt: '2026-01-01T00:00:00.000Z'
+                  updatedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 1
+      parameters:
+      - name: part_number
+        in: query
+        required: false
+        schema:
+          type: string
+        example: THE-HOMER-001
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+        example: INSTALLED
+    post:
+      summary: create
+      tags:
+      - Instance
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                partNumber:
+                  type: string
+                serialNumber:
+                  type: string
+              required:
+              - partNumber
+              - serialNumber
+            example:
+              partNumber: THE-HOMER-001
+              serialNumber: HMR-0001
+      responses:
+        '201':
+          description: creates an instance at RECEIVED with an initial RECEIVED event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  serialNumber:
+                    type: string
+                  currentStatus:
+                    type: string
+                  partNumber:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - serialNumber
+                - currentStatus
+                - partNumber
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                serialNumber: HMR-0001
+                currentStatus: RECEIVED
+                partNumber: THE-HOMER-001
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '422':
+          description: returns 422 on duplicate serialNumber
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Serial number has already been taken
+                code: VALIDATION_FAILED
+  "/instances/{instance_serial}/events":
+    get:
+      summary: index
+      tags:
+      - Instances::Event
+      parameters:
+      - name: instance_serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns the event log ordered by occurred_at ASC then id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        eventType:
+                          type: string
+                        actor:
+                          type: string
+                        notes:
+                          nullable: true
+                        metadata:
+                          type: object
+                          properties: {}
+                        occurredAt:
+                          type: string
+                          format: date-time
+                        recordedAt:
+                          type: string
+                          format: date-time
+                      required:
+                      - id
+                      - eventType
+                      - actor
+                      - notes
+                      - metadata
+                      - occurredAt
+                      - recordedAt
+                  meta:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalCount:
+                        type: integer
+                    required:
+                    - currentPage
+                    - totalPages
+                    - totalCount
+                required:
+                - data
+                - meta
+              example:
+                data:
+                - id: 00000000-0000-0000-0000-000000000000
+                  eventType: RECEIVED
+                  actor: system
+                  notes:
+                  metadata: {}
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  eventType: IN_ASSEMBLY
+                  actor: system
+                  notes:
+                  metadata: {}
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                - id: 00000000-0000-0000-0000-000000000000
+                  eventType: INSTALLED
+                  actor: system
+                  notes:
+                  metadata: {}
+                  occurredAt: '2026-01-01T00:00:00.000Z'
+                  recordedAt: '2026-01-01T00:00:00.000Z'
+                meta:
+                  currentPage: 1
+                  totalPages: 1
+                  totalCount: 3
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
+    post:
+      summary: create
+      tags:
+      - Instances::Event
+      parameters:
+      - name: instance_serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                eventType:
+                  type: string
+                actor:
+                  type: string
+                notes:
+                  type: string
+                occurredAt:
+                  type: string
+                  format: date-time
+                metadata:
+                  type: object
+                  properties:
+                    station:
+                      type: string
+                  required:
+                  - station
+                recordedAt:
+                  type: string
+                  format: date-time
+              required:
+              - eventType
+              - actor
+              - occurredAt
+            example:
+              eventType: INSPECTED
+              actor: qa@factory.com
+              notes: Started assembly
+              occurredAt: '2026-01-01T00:00:00.000Z'
+              metadata:
+                station: A
+              recordedAt: '2026-01-01T00:00:00.000Z'
+      responses:
+        '201':
+          description: sets recorded_at server-side and ignores a client-supplied
+            recordedAt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  eventType:
+                    type: string
+                  actor:
+                    type: string
+                  notes:
+                    type: string
+                    nullable: true
+                  metadata:
+                    type: object
+                    properties:
+                      station:
+                        type: string
+                    required:
+                    - station
+                    nullable: true
+                  occurredAt:
+                    type: string
+                    format: date-time
+                  recordedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - eventType
+                - actor
+                - notes
+                - metadata
+                - occurredAt
+                - recordedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                eventType: INSPECTED
+                actor: qa@factory.com
+                notes:
+                metadata:
+                occurredAt: '2026-01-01T00:00:00.000Z'
+                recordedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
+        '422':
+          description: returns 422 when occurredAt is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Occurred at can't be blank
+                code: VALIDATION_FAILED
+  "/instances/{serial}":
+    get:
+      summary: show
+      tags:
+      - Instance
+      parameters:
+      - name: serial
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns the instance with derived current_status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  serialNumber:
+                    type: string
+                  currentStatus:
+                    type: string
+                  partNumber:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - id
+                - serialNumber
+                - currentStatus
+                - partNumber
+                - createdAt
+                - updatedAt
+              example:
+                id: 00000000-0000-0000-0000-000000000000
+                serialNumber: HMR-0001
+                currentStatus: INSTALLED
+                partNumber: THE-HOMER-001
+                createdAt: '2026-01-01T00:00:00.000Z'
+                updatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 for an unknown serial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
+                  = $1]
+                code: NOT_FOUND
   "/parts":
     get:
       summary: index
@@ -669,7 +1130,7 @@ paths:
               example:
                 id: 00000000-0000-0000-0000-000000000000
                 partNumber: ST-003
-                name: Part 9
+                name: Example Part
                 description: A part definition for testing.
                 revision: A
                 status: OBSOLETE
