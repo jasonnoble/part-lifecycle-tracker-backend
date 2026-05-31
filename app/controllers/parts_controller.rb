@@ -42,6 +42,21 @@ class PartsController < ApplicationController
     end
   end
 
+  def instances
+    find_part!
+
+    scope = PartInstance.includes(:part_definition).for_part_number(params[:part_number])
+    scope = scope.with_status(params[:status]) if params[:status].present?
+    scope = scope.order(:serial_number)
+
+    @pagy, instances = pagy(:offset, scope)
+
+    render json: {
+      data: PartInstanceSerializer.new(instances).serializable_hash,
+      meta: pagination_meta(@pagy)
+    }
+  end
+
   def update_status
     part = find_part!
     target = params[:status].to_s
