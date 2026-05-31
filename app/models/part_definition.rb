@@ -4,6 +4,7 @@ class PartDefinition < ApplicationRecord
   STATUSES = %w[DRAFT RELEASED OBSOLETE].freeze
 
   has_many :bom_items, foreign_key: :parent_part_definition_id, dependent: :destroy
+  has_many :part_instances, dependent: :destroy
   has_one :stock, dependent: :destroy
 
   validates :part_number, presence: true, uniqueness: true
