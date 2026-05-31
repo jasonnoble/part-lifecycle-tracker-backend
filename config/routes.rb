@@ -9,6 +9,7 @@ Rails.application.routes.draw do
     member do
       post :status, action: :update_status
       get "instances", to: "parts#instances"
+      get "context", to: "parts#context"
       get "bom", to: "bom_items#index"
       post "bom", to: "bom_items#create"
       delete "bom/:bom_item_id", to: "bom_items#destroy"

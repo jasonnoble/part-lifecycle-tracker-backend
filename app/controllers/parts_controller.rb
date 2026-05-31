@@ -57,6 +57,11 @@ class PartsController < ApplicationController
     }
   end
 
+  def context
+    part = find_part!
+    render json: PartContext.new(part).as_json
+  end
+
   def update_status
     part = find_part!
     target = params[:status].to_s

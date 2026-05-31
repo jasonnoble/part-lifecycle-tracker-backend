@@ -1563,6 +1563,150 @@ paths:
                 error: Couldn't find BomItem with 'id'="00000000-0000-0000-0000-000000000000"
                   [WHERE "bom_items"."parent_part_definition_id" = $1]
                 code: NOT_FOUND
+  "/parts/{part_number}/context":
+    get:
+      summary: context
+      tags:
+      - Part
+      parameters:
+      - name: part_number
+        in: path
+        required: true
+        schema:
+          type: string
+        example: DOES-NOT-EXIST
+      responses:
+        '200':
+          description: returns a child stockAvailable of 0 when the child has no stock
+            row
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  partNumber:
+                    type: string
+                  name:
+                    type: string
+                  revision:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                  summary:
+                    type: string
+                  inventory:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      byStatus:
+                        type: object
+                        properties:
+                          CERTIFIED:
+                            type: integer
+                          IN_ASSEMBLY:
+                            type: integer
+                          RECEIVED:
+                            type: integer
+                    required:
+                    - total
+                    - byStatus
+                  openPurchaseOrders:
+                    type: integer
+                  bom:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        partNumber:
+                          type: string
+                        name:
+                          type: string
+                        quantity:
+                          type: integer
+                        stockAvailable:
+                          type: integer
+                      required:
+                      - partNumber
+                      - name
+                      - quantity
+                      - stockAvailable
+                  recentEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        serialNumber:
+                          type: string
+                        eventType:
+                          type: string
+                        occurredAt:
+                          type: string
+                          format: date-time
+                        actor:
+                          type: string
+                        notes:
+                          type: string
+                      required:
+                      - serialNumber
+                      - eventType
+                      - occurredAt
+                      - actor
+                      - notes
+                  generatedAt:
+                    type: string
+                    format: date-time
+                required:
+                - partNumber
+                - name
+                - revision
+                - status
+                - summary
+                - inventory
+                - openPurchaseOrders
+                - bom
+                - recentEvents
+                - generatedAt
+              example:
+                partNumber: PARENT-001
+                name: Parent
+                revision: A
+                status: RELEASED
+                summary: Parent. Rev A released. 0 instances created, 0 in assembly,
+                  0 certified.
+                inventory:
+                  total: 0
+                  byStatus:
+                    CERTIFIED: 2
+                    IN_ASSEMBLY: 4
+                    RECEIVED: 1
+                openPurchaseOrders: 0
+                bom:
+                - partNumber: CHILD-001
+                  name: Child
+                  quantity: 2
+                  stockAvailable: 0
+                recentEvents: []
+                generatedAt: '2026-01-01T00:00:00.000Z'
+        '404':
+          description: returns 404 NOT_FOUND for an unknown part
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Couldn't find PartDefinition with [WHERE "part_definitions"."part_number"
+                  = $1]
+                code: NOT_FOUND
   "/parts/{part_number}/instances":
     get:
       summary: instances
