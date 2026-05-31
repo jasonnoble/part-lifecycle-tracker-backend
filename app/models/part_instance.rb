@@ -6,6 +6,7 @@ class PartInstance < ApplicationRecord
 
   belongs_to :part_definition
   has_many :lifecycle_events, dependent: :destroy
+  has_many :test_records, dependent: :destroy
 
   validates :serial_number, presence: true, uniqueness: true
   validates :current_status, inclusion: { in: STATUSES }
