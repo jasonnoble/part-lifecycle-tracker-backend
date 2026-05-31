@@ -44,6 +44,53 @@ RSpec.describe "Supplier PO receive", type: :request do
       expect(log.reason).to include(po.id)
     end
 
+    it "returns 422 when lines is empty or missing", openapi: false do
+      post "/supplier-purchase-orders/#{po.id}/receive", params: { lines: [] }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
+    it "returns 422 when a line quantity is not greater than 0", openapi: false do
+      post "/supplier-purchase-orders/#{po.id}/receive", params: {
+        lines: [ { lineId: horn_line.id, quantity: 0, serials: [] } ]
+      }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
+    it "rolls back with 422 if a line's status transition is refused", openapi: false do
+      # whiny_transitions: false makes the bang event return false (not raise) when
+      # refused; the controller turns that into RecordInvalid and rolls back.
+      allow_any_instance_of(SupplierPurchaseOrderLine).to receive(:receive!).and_return(false)
+      allow_any_instance_of(SupplierPurchaseOrderLine).to receive(:partially_receive!).and_return(false)
+
+      expect {
+        post "/supplier-purchase-orders/#{po.id}/receive", params: {
+          lines: [ { lineId: horn_line.id, quantity: 2, serials: %w[HMR-0001 HMR-0002] } ]
+        }, as: :json
+      }.not_to change(PartInstance, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
+    it "rolls back with 422 if the order's status transition is refused", openapi: false do
+      # Lines advance fine; only the PO-level roll-up transition is refused.
+      allow_any_instance_of(SupplierPurchaseOrder).to receive(:receive!).and_return(false)
+      allow_any_instance_of(SupplierPurchaseOrder).to receive(:partially_receive!).and_return(false)
+
+      expect {
+        post "/supplier-purchase-orders/#{po.id}/receive", params: {
+          lines: [ { lineId: horn_line.id, quantity: 2, serials: %w[HMR-0001 HMR-0002] } ]
+        }, as: :json
+      }.not_to change(PartInstance, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+    end
+
     it "increments existing stock rather than resetting it" do
       create(:stock, part_definition: horn, quantity_on_hand: 5)
 

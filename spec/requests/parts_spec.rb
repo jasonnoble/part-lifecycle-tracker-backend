@@ -174,5 +174,15 @@ RSpec.describe "Parts", type: :request do
       expect(response).to have_http_status(:not_found)
       expect(json["code"]).to eq("NOT_FOUND")
     end
+
+    it "returns 422 when the update is invalid (blank name)", openapi: false do
+      create(:part_definition, :draft, part_number: "UPD-005", name: "Valid Name")
+
+      patch "/parts/UPD-005", params: { name: "" }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["code"]).to eq("VALIDATION_FAILED")
+      expect(PartDefinition.find_by(part_number: "UPD-005").name).to eq("Valid Name")
+    end
   end
 end

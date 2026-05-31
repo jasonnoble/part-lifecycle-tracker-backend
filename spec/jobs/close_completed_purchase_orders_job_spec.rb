@@ -56,6 +56,15 @@ RSpec.describe CloseCompletedPurchaseOrdersJob, type: :job do
       expect(second_run).to eq(0)
     end
 
+    it "does not count a RECEIVED PO that fails to close" do
+      create(:supplier_purchase_order, :received, supplier_id: "VENDOR-JOB-9")
+      # whiny_transitions: false makes `close` return false (rather than raise) when
+      # the transition is refused; such a PO must not be counted as closed.
+      allow_any_instance_of(SupplierPurchaseOrder).to receive(:close).and_return(false)
+
+      expect(described_class.new.perform).to eq(0)
+    end
+
     it "can be enqueued via Active Job / Solid Queue" do
       expect { described_class.perform_later }
         .to have_enqueued_job(described_class)
