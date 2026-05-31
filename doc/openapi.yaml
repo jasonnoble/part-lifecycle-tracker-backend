@@ -1459,7 +1459,7 @@ paths:
               example:
                 id: 00000000-0000-0000-0000-000000000000
                 partNumber: ST-003
-                name: Example Part
+                name: Obsoletable Part
                 description: A part definition for testing.
                 revision: A
                 status: OBSOLETE

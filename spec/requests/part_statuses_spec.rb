@@ -29,7 +29,9 @@ RSpec.describe "Part status transitions", type: :request do
     end
 
     it "transitions DRAFT -> OBSOLETE with 200" do
-      create(:part_definition, :draft, part_number: "ST-003")
+      # Pin name so the generated OpenAPI example does not depend on the global
+      # factory sequence position (which shifts as other specs are added/removed).
+      create(:part_definition, :draft, part_number: "ST-003", name: "Obsoletable Part")
 
       post "/parts/ST-003/status", params: { status: "OBSOLETE" }
 
