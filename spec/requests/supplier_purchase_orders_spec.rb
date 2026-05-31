@@ -28,7 +28,10 @@ RSpec.describe "Supplier purchase orders", type: :request do
     end
 
     it "persists the PO and its lines" do
-      create(:part_definition, part_number: "HORN-LCC-001")
+      # Pin the name so the captured doc/openapi.yaml POST 201 example is
+      # deterministic; the factory's name is a global FactoryBot sequence and
+      # this example is what rspec_openapi records for this path/status.
+      create(:part_definition, part_number: "HORN-LCC-001", name: "La Cucaracha Horn")
 
       expect {
         post "/supplier-purchase-orders", params: {

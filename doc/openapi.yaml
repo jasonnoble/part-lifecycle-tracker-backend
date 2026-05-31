@@ -167,7 +167,7 @@ paths:
                 - id: 00000000-0000-0000-0000-000000000000
                   quantity: 5
                   partNumber: THE-HOMER-001
-                  partName: Example Part
+                  partName: The Homer
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
         '422':
@@ -1940,7 +1940,7 @@ paths:
                   quantityReceived: 0
                   status: NEEDS_ORDERING
                   partNumber: HORN-LCC-001
-                  partName: Example Part
+                  partName: La Cucaracha Horn
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
         '422':
