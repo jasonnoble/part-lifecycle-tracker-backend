@@ -67,3 +67,5 @@ gem "pagy", "~> 43.5"
 
 # State machines for status lifecycles (Part Definition, PO lines, etc.)
 gem "aasm", "~> 5.5"
+
+gem "rack-cors", "~> 3.0"
