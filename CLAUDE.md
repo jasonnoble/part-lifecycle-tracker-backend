@@ -64,9 +64,11 @@ bin/rubocop                # lint (rubocop-rails-omakase house style)
 bin/rubocop -a             # autocorrect
 bin/brakeman --no-pager    # security scan
 bin/bundler-audit          # gem vulnerability scan
+
+bin/ci                     # run the full CI suite locally (mirrors the GitHub workflow)
 ```
 
-CI (`.github/workflows/ci.yml`) runs four jobs that must pass: `brakeman`, `bundler-audit`, `rubocop`, and `rspec` (against a Postgres 13 service). Run `bin/rubocop` and `bundle exec rspec` before pushing.
+CI (`.github/workflows/ci.yml`) runs three jobs that must pass: `scan_ruby` (runs `brakeman` then `bundler-audit`), `lint` (`rubocop`), and `rspec` (against a Postgres 13 service). Run `bin/ci` before pushing — it runs the same checks the workflow does (RSpec + OpenAPI doc check, undercover coverage gate, `rubocop`, `bundler-audit`, `brakeman`), so a green `bin/ci` means green CI.
 
 ## Testing conventions
 
