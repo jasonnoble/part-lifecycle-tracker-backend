@@ -67,6 +67,11 @@ SeedHelper.step("CO-0001 Powell Motors — #{POWELL_QTY}x #{HOMER_PART_NUMBER} (
   end
   line.update!(quantity: POWELL_QTY) unless line.quantity == POWELL_QTY
 
+  # The Homer's active BOM, exploded into one work_order_step per item. Ordered by
+  # created_at/id to mirror exactly what WorkOrdersController#create produces at
+  # runtime (JAS-35). Computed once and reused for all POWELL_QTY work orders.
+  active_bom_items = homer.bom_items.where(deleted_at: nil).order(:created_at, :id).to_a
+
   # One part instance + work order per reserved unit, each work order linked
   # back to the customer order line for demand->build traceability.
   (1..POWELL_QTY).each do |n|
@@ -76,10 +81,21 @@ SeedHelper.step("CO-0001 Powell Motors — #{POWELL_QTY}x #{HOMER_PART_NUMBER} (
       pi.current_status     = "IN_ASSEMBLY"
     end
 
-    WorkOrder.find_or_create_by!(customer_order_line_id: line.id,
-                                 part_instance_id: instance.id) do |wo|
-      wo.part_definition_id = homer.id
-      wo.status             = "OPEN"
+    wo = WorkOrder.find_or_create_by!(customer_order_line_id: line.id,
+                                      part_instance_id: instance.id) do |w|
+      w.part_definition_id = homer.id
+      w.status             = "OPEN"
+    end
+
+    # Explode the BOM into steps (JAS-69). Every step is PENDING: Powell's order is
+    # fully in stock, so the StockReservationJob equivalent reserves all units (no
+    # BLOCKED-for-stock steps), and the muzzle-before-dome dependency is enforced
+    # dynamically at install time (DEPENDENCY_NOT_MET), not pre-set as BLOCKED.
+    # Without these rows the work orders are empty shells that can never be worked.
+    active_bom_items.each do |bom_item|
+      WorkOrderStep.find_or_create_by!(work_order_id: wo.id, bom_item_id: bom_item.id) do |step|
+        step.status = "PENDING"
+      end
     end
   end
 end
