@@ -66,7 +66,7 @@ bin/brakeman --no-pager    # security scan
 bin/bundler-audit          # gem vulnerability scan
 ```
 
-CI (`.github/workflows/ci.yml`) runs four jobs that must pass: `brakeman`, `bundler-audit`, `rubocop`, and `rspec` (against a Postgres 13 service). Run `bin/rubocop` and `bundle exec rspec` before pushing.
+CI (`.github/workflows/ci.yml`) runs three jobs that must pass: `scan_ruby` (runs `brakeman` then `bundler-audit`), `lint` (`rubocop`), and `rspec` (against a Postgres 13 service). Run `bin/rubocop` and `bundle exec rspec` before pushing.
 
 ## Testing conventions
 
