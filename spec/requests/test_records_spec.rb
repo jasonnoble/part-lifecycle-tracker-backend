@@ -60,6 +60,25 @@ RSpec.describe "Test Records", type: :request do
       expect(json.keys).not_to include("updatedAt")
     end
 
+    it "records a FAIL test and returns it (the FE failure path)", openapi: false do
+      part = create(:part_definition, part_number: "THE-HOMER-001")
+      instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
+
+      expect do
+        post "/instances/HMR-0001/tests", params: {
+          testType: "HORN_SEQUENCE",
+          result: "FAIL",
+          notes: "Bar 4 muted",
+          conductedBy: "qa@factory.com",
+          occurredAt: "2026-05-28T14:00:00Z"
+        }
+      end.to change { instance.test_records.count }.by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(json["result"]).to eq("FAIL")
+      expect(json["notes"]).to eq("Bar 4 muted")
+    end
+
     it "sets recorded_at server-side and ignores a client-supplied recordedAt" do
       part = create(:part_definition, part_number: "THE-HOMER-001")
       instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")

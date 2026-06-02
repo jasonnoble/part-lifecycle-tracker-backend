@@ -66,6 +66,30 @@ HOMER_PO_LINE_QTY = 25
 # "recent". Each instance's chain is spread out in minutes by its index.
 EVENT_ANCHOR = Time.utc(2026, 5, 28, 9, 0, 0)
 
+# A certified instance carries a realistic QA test history so the InstanceDetail
+# "Test Records" section (JAS-70) renders populated instead of "No test records."
+# Tells a fix-and-retest story and exercises every result badge: an initial FAIL,
+# its PASS retest, an INCONCLUSIVE re-run, and a final PASS sign-off.
+HOMER_TEST_RECORD_SERIAL = "HMR-0016" # one of the two CERTIFIED instances above
+HOMER_QA = "quinn@factory.com"        # Dr. Quinn, QA / certifying authority
+HOMER_TEST_RECORDS = [
+  { test_type: "HORN_SEQUENCE", result: "FAIL",
+    occurred_at: Time.utc(2026, 5, 26, 13, 0, 0),
+    notes: "La Cucaracha bar 4 muted; horn diaphragm reseated." },
+  { test_type: "HORN_SEQUENCE", result: "PASS",
+    occurred_at: Time.utc(2026, 5, 26, 15, 30, 0),
+    notes: "Retest after diaphragm reseat; all 7 bars clean." },
+  { test_type: "DOME_PRESSURE", result: "PASS",
+    occurred_at: Time.utc(2026, 5, 27, 9, 0, 0),
+    notes: "Transparent dome held 1.5 atm for 30 min, no leak." },
+  { test_type: "EMISSIONS", result: "INCONCLUSIVE",
+    occurred_at: Time.utc(2026, 5, 27, 11, 0, 0),
+    notes: "V8 emissions analyzer faulted mid-run; flagged for re-run." },
+  { test_type: "FINAL_QA", result: "PASS",
+    occurred_at: Time.utc(2026, 5, 27, 16, 0, 0),
+    notes: "Full functional sign-off ahead of certification." }
+].freeze
+
 homer = PartDefinition.find_by!(part_number: HOMER_CONTEXT_PART_NUMBER)
 
 SeedHelper.step("seed #{HOMER_INSTANCE_ROSTER.size} The Homer instances (idempotent by serial_number)") do
@@ -95,6 +119,20 @@ SeedHelper.step("seed #{HOMER_INSTANCE_ROSTER.size} The Homer instances (idempot
     end
     LifecycleEvent.insert_all(events)
   end
+end
+
+SeedHelper.step("seed #{HOMER_TEST_RECORDS.size} test records on #{HOMER_TEST_RECORD_SERIAL} (incl. a FAIL)") do
+  instance = PartInstance.find_by!(serial_number: HOMER_TEST_RECORD_SERIAL)
+
+  # test_records is append-only with no natural unique key, so guard on existence
+  # (same pattern as the lifecycle-event chain above): only write the history when
+  # this instance has none yet, so a re-run never appends duplicates.
+  next if instance.test_records.exists?
+
+  rows = HOMER_TEST_RECORDS.map do |attrs|
+    { part_instance_id: instance.id, conducted_by: HOMER_QA, **attrs }
+  end
+  TestRecord.insert_all(rows)
 end
 
 SeedHelper.step("set non-zero stock on The Homer's BOM children (after Track 2 reset)") do
