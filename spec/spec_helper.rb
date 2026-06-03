@@ -13,6 +13,9 @@ SimpleCov.start "rails" do
   # it's never loaded under the test env and can't be meaningfully covered. It
   # serves static HTML and a generated file — no logic worth a request spec.
   add_filter "app/controllers/api_docs_controller.rb"
+  # Rake tasks are operator glue, not loaded during specs; their real logic lives
+  # in services (e.g. StytchUserSync), which are covered directly.
+  add_filter "lib/tasks/"
   enable_coverage :branch
 end
 
