@@ -6,7 +6,7 @@ require "rspec/openapi"
 RSpec::OpenAPI.title = "Part Lifecycle Tracker API"
 RSpec::OpenAPI.application_version = "0.1.0"
 RSpec::OpenAPI.info = {
-  description: "Tracks aircraft/engine parts from design through manufacture and test. " \
+  description: "Tracks manufactured parts from design through assembly and test. " \
                "Spec is generated from RSpec request specs (no hand-written DSL)."
 }
 RSpec::OpenAPI.servers = [ { url: "http://localhost:3000" } ]

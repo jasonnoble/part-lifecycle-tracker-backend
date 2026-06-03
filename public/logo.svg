@@ -1,0 +1,22 @@
+<svg width="600" height="600" viewBox="0 0 600 600" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Part Lifecycle Tracker logo</title>
+<desc>A green checkmark inside a rounded square, surrounded by a three-section ring in blue, gold, and red reading PART, LIFECYCLE, TRACKER, all upright.</desc>
+<defs>
+<path id="arcPart" d="M141.0,156.8 A214,214 0 0 1 459.0,156.8"/>
+<path id="arcLife" d="M68.2,206.3 A250,250 0 0 0 265.2,547.6"/>
+<path id="arcTrack" d="M334.8,547.6 A250,250 0 0 0 531.8,206.3"/>
+</defs>
+
+<path d="M110.0,166.9 A232,232 0 0 1 490.0,166.9" fill="none" stroke="#2563EB" stroke-width="78"/>
+<path d="M279.8,531.1 A232,232 0 0 1 89.7,202.0" fill="none" stroke="#D97706" stroke-width="78"/>
+<path d="M510.3,202.0 A232,232 0 0 1 320.2,531.1" fill="none" stroke="#DC2626" stroke-width="78"/>
+
+<g font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="44" fill="#ffffff" letter-spacing="3">
+<text text-anchor="middle"><textPath href="#arcPart" startOffset="50%">PART</textPath></text>
+<text text-anchor="middle"><textPath href="#arcLife" startOffset="50%">LIFECYCLE</textPath></text>
+<text text-anchor="middle"><textPath href="#arcTrack" startOffset="50%">TRACKER</textPath></text>
+</g>
+
+<rect x="210" y="210" width="180" height="180" rx="34" fill="#16A34A"/>
+<polyline points="252,302 287,340 350,256" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
