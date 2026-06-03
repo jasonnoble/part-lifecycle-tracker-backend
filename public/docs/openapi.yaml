@@ -6,7 +6,10 @@ info:
   description: Tracks manufactured parts from design through assembly and test. Spec
     is generated from RSpec request specs (no hand-written DSL).
 servers:
+- url: https://partledger.jasonnoble.dev
+  description: Production
 - url: http://localhost:3000
+  description: Local development
 paths:
   "/customer-orders":
     get:
