@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_03_140758) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_03_154134) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -164,11 +164,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_140758) do
     t.string "email"
     t.string "name"
     t.string "role"
+    t.string "stytch_user_id"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["stytch_user_id"], name: "index_users_on_stytch_user_id", unique: true
     t.check_constraint "length(TRIM(BOTH FROM email)) > 0", name: "users_email_present"
     t.check_constraint "length(TRIM(BOTH FROM name)) > 0", name: "users_name_present"
-    t.check_constraint "role::text = ANY (ARRAY['salesperson'::character varying, 'floor_manager'::character varying, 'installer'::character varying, 'qa_engineer'::character varying, 'site_manager'::character varying]::text[])", name: "users_role_check"
+    t.check_constraint "role::text = ANY (ARRAY['salesperson'::character varying::text, 'floor_manager'::character varying::text, 'installer'::character varying::text, 'qa_engineer'::character varying::text, 'site_manager'::character varying::text])", name: "users_role_check"
   end
 
   create_table "work_order_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
