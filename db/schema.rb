@@ -168,7 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_140758) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.check_constraint "length(TRIM(BOTH FROM email)) > 0", name: "users_email_present"
     t.check_constraint "length(TRIM(BOTH FROM name)) > 0", name: "users_name_present"
-    t.check_constraint "role::text = ANY (ARRAY['salesperson'::character varying, 'floor_manager'::character varying, 'installer'::character varying, 'installer'::character varying, 'qa_engineer'::character varying, 'site_manager'::character varying]::text[])", name: "users_role_check"
+    t.check_constraint "role::text = ANY (ARRAY['salesperson'::character varying, 'floor_manager'::character varying, 'installer'::character varying, 'qa_engineer'::character varying, 'site_manager'::character varying]::text[])", name: "users_role_check"
   end
 
   create_table "work_order_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
