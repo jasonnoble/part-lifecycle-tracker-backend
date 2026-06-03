@@ -42,6 +42,8 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
+  gem "faker"
+
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
@@ -57,6 +59,10 @@ group :development, :test do
   # command print parser's "running 4.0.5" warning at boot.)
   gem "simplecov", require: false
   gem "undercover", require: false
+end
+
+group :test do
+  gem "shoulda-matchers", "~> 7.0"
 end
 
 gem "alba", "~> 3.10"
