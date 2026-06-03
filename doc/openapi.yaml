@@ -272,6 +272,29 @@ paths:
               example:
                 error: Couldn't find CustomerOrder with 'id'="00000000-0000-0000-0000-000000000000"
                 code: NOT_FOUND
+  "/demo-sessions":
+    post:
+      summary: create
+      tags:
+      - DemoSession
+      responses:
+        '404':
+          description: returns 404 for a non-demo email without calling Stytch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Not found
+                code: NOT_FOUND
   "/instances":
     get:
       summary: index
@@ -1004,7 +1027,8 @@ paths:
       - Me
       responses:
         '200':
-          description: authenticates as read-only / no-role (null identity, not 401)
+          description: mints a session for a seeded demo persona; the JWT then resolves
+            them via /me
           content:
             application/json:
               schema:
@@ -1028,10 +1052,13 @@ paths:
                 - name
                 - role
               example:
-                email:
-                name:
-                role:
-                permissions: []
+                email: dr.quinn@example.com
+                name: Dr. Quinn
+                role: qa_engineer
+                permissions:
+                - step.certify
+                - instance.record_event
+                - instance.record_test
         '401':
           description: returns 401 when the session token is invalid or expired
           content:
