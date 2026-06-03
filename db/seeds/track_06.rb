@@ -24,9 +24,12 @@ SeedHelper.track("Track 6 — Work Orders in various states (JAS-40)")
 
 # Seeded personas. Installer and validator/certifier are always distinct so the
 # work_order_steps_four_eyes CHECK (validated_actor <> installed_actor) holds.
-INSTALLER = "jamie@factory.com" # Jamie Torres, assembly technician
-VALIDATOR = "riley@factory.com" # Riley Park, validation technician
-QA = "quinn@factory.com" # Dr. Quinn, QA / certifying authority
+# Actor identities match the seeded users below (JAS-79: every recorded actor
+# must reconcile to a users row). Installer and validator are distinct people —
+# both hold the installer role; four-eyes is an identity rule, not a role rule.
+INSTALLER = "jamie.torres@example.com" # Jamie Torres, installer
+VALIDATOR = "riley.park@example.com"   # Riley Park, installer (validates Jamie's work)
+QA = "dr.quinn@example.com"            # Dr. Quinn, qa_engineer / certifying authority
 
 users = [
   { name: "Sarah Chen", email: "sarah.chen@example.com", role: "salesperson" },

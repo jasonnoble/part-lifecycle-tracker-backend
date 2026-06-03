@@ -29,9 +29,11 @@ RSpec.describe "Muzzle before dome (dependency enforcement)", type: :request, op
   let!(:muzzle_component) { create(:part_instance, part_definition: muzzle, serial_number: "MZL-0001", current_status: "RECEIVED") }
   let!(:dome_component) { create(:part_instance, part_definition: dome, serial_number: "DOME-0001", current_status: "RECEIVED") }
 
-  let(:tech_one) { "jamie@factory.com" }
-  let(:tech_two) { "riley@factory.com" }
-  let(:qa) { "quinn@factory.com" }
+  # The actor is the authenticated user (JAS-79): sign_in switches personas
+  # between calls. Both techs hold the installer role — four-eyes is identity-based.
+  let(:tech_one) { create(:user, :installer, name: "Jamie Torres", email: "jamie.torres@example.com") }
+  let(:tech_two) { create(:user, :installer, name: "Riley Park", email: "riley.park@example.com") }
+  let(:qa) { create(:user, :qa_engineer, name: "Dr. Quinn", email: "dr.quinn@example.com") }
 
   def step_for(child_part_number)
     json["steps"].find { |s| s["childPartNumber"] == child_part_number }
@@ -49,8 +51,9 @@ RSpec.describe "Muzzle before dome (dependency enforcement)", type: :request, op
     dome_step_id = step_for("DOME-TRANS-001").fetch("id")
 
     # 2. Attempt to install the DOME first -> 409 DEPENDENCY_NOT_MET naming MUZZLE-001.
+    sign_in tech_one
     post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/install",
-      params: { installedSerial: "DOME-0001", actor: tech_one }, as: :json
+      params: { installedSerial: "DOME-0001" }, as: :json
     expect(response).to have_http_status(:conflict)
     expect(json["code"]).to eq("DEPENDENCY_NOT_MET")
     expect(json["error"]).to include("MUZZLE-001")
@@ -58,43 +61,43 @@ RSpec.describe "Muzzle before dome (dependency enforcement)", type: :request, op
     # 3. Install the muzzle (Tech 1). Appends an INSTALLED lifecycle event.
     expect {
       post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/install",
-        params: { installedSerial: "MZL-0001", actor: tech_one }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
     }.to change { muzzle_component.lifecycle_events.where(event_type: "INSTALLED").count }.by(1)
     expect(response).to have_http_status(:ok)
     expect(step_for("MUZZLE-001")["status"]).to eq("INSTALLED")
     expect(muzzle_component.reload.current_status).to eq("INSTALLED")
 
     # 4-eyes rejection: the installer cannot also validate -> 409 SAME_ACTOR.
-    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/validate",
-      params: { actor: tech_one }, as: :json
+    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/validate", as: :json
     expect(response).to have_http_status(:conflict)
     expect(json["code"]).to eq("SAME_ACTOR")
 
     # 4. Validate the muzzle (Tech 2), then certify (QA).
-    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/validate",
-      params: { actor: tech_two }, as: :json
+    sign_in tech_two
+    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/validate", as: :json
     expect(response).to have_http_status(:ok)
     expect(step_for("MUZZLE-001")["status"]).to eq("VALIDATED")
 
-    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/certify",
-      params: { actor: qa }, as: :json
+    sign_in qa
+    post "/work-orders/#{work_order_id}/steps/#{muzzle_step_id}/certify", as: :json
     expect(response).to have_http_status(:ok)
     expect(step_for("MUZZLE-001")["status"]).to eq("CERTIFIED")
 
     # 5. Now the dome installs successfully (prerequisite is CERTIFIED).
+    sign_in tech_one
     post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/install",
-      params: { installedSerial: "DOME-0001", actor: tech_one }, as: :json
+      params: { installedSerial: "DOME-0001" }, as: :json
     expect(response).to have_http_status(:ok)
     expect(step_for("DOME-TRANS-001")["status"]).to eq("INSTALLED")
     expect(dome_component.reload.current_status).to eq("INSTALLED")
 
     # Validate (different actor) and certify the dome.
-    post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/validate",
-      params: { actor: tech_two }, as: :json
+    sign_in tech_two
+    post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/validate", as: :json
     expect(response).to have_http_status(:ok)
 
-    post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/certify",
-      params: { actor: qa }, as: :json
+    sign_in qa
+    post "/work-orders/#{work_order_id}/steps/#{dome_step_id}/certify", as: :json
     expect(response).to have_http_status(:ok)
     expect(step_for("DOME-TRANS-001")["status"]).to eq("CERTIFIED")
 

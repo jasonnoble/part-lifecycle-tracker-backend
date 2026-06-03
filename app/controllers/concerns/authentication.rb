@@ -10,6 +10,7 @@ module Authentication
 
   included do
     before_action :authenticate_session!
+    before_action :forbid_read_only_writes!
     attr_reader :current_user
   end
 
@@ -21,6 +22,16 @@ module Authentication
 
     # May be nil for an authenticated-but-unseeded identity (read-only/no-role).
     @current_user = User.find_by(stytch_user_id: @stytch_user_id)
+  end
+
+  # Read-only sessions (authenticated but no seeded user, hence no assigned
+  # role) may GET but never mutate (JAS-75/JAS-79). Role-specific gates layer on
+  # top via Permissions; this is the blanket "writes need an identity" floor.
+  def forbid_read_only_writes!
+    return if request.get? || request.head?
+    return if current_user.present?
+
+    render_error("Read-only session: no assigned role for this account", "READ_ONLY", :forbidden)
   end
 
   def bearer_token

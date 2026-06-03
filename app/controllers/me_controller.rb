@@ -7,7 +7,10 @@ class MeController < ApplicationController
     render json: {
       email: current_user&.email,
       name: current_user&.name,
-      role: current_user&.role
+      role: current_user&.role,
+      # Server-computed abilities (Permissions matrix) so the SPA gates its UI
+      # from the same policy the API enforces. Empty for read-only sessions.
+      permissions: Permissions.for(current_user)
     }
   end
 end

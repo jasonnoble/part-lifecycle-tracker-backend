@@ -30,7 +30,7 @@ RSpec.describe "Authentication", type: :request do
   end
 
   describe "with a valid session for a seeded user" do
-    it "resolves current_user and returns their assigned role" do
+    it "resolves current_user and returns their assigned role and permissions" do
       user = create(:user, :qa_engineer, name: "Dr. Quinn", email: "dr.quinn@example.com")
       sign_in(user)
 
@@ -40,8 +40,22 @@ RSpec.describe "Authentication", type: :request do
       expect(json).to eq(
         "email" => "dr.quinn@example.com",
         "name" => "Dr. Quinn",
-        "role" => "qa_engineer"
+        "role" => "qa_engineer",
+        "permissions" => [
+          "step.install", "step.validate", "step.certify",
+          "instance.record_event", "instance.record_test"
+        ]
       )
+    end
+
+    it "excludes role-gated permissions the assigned role lacks" do
+      user = create(:user, :installer, email: "jamie.torres@example.com")
+      sign_in(user)
+
+      get "/me", headers: { "Authorization" => "Bearer valid.session.jwt" }
+
+      expect(json["permissions"]).to include("step.install")
+      expect(json["permissions"]).not_to include("step.certify")
     end
   end
 
@@ -52,7 +66,16 @@ RSpec.describe "Authentication", type: :request do
       get "/me", headers: { "Authorization" => "Bearer valid.but.unknown" }
 
       expect(response).to have_http_status(:ok)
-      expect(json).to eq("email" => nil, "name" => nil, "role" => nil)
+      expect(json).to eq("email" => nil, "name" => nil, "role" => nil, "permissions" => [])
+    end
+
+    it "rejects writes from a read-only session with 403 READ_ONLY" do
+      sign_in_stytch_user("user-not-in-our-db")
+
+      post "/instances", params: { partNumber: "ANY", serialNumber: "ANY-1" }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(json).to include("code" => "READ_ONLY")
     end
   end
 end

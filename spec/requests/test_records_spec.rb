@@ -36,6 +36,10 @@ RSpec.describe "Test Records", type: :request do
   end
 
   describe "POST /instances/:serial/tests" do
+    # conducted_by is the authenticated identity (JAS-79), never client-supplied.
+    # Pinned email keeps the generated OpenAPI example deterministic.
+    before { sign_in create(:user, :qa_engineer, email: "dr.quinn@example.com") }
+
     it "records a PASS test and returns 201" do
       part = create(:part_definition, part_number: "THE-HOMER-001")
       instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
@@ -45,7 +49,6 @@ RSpec.describe "Test Records", type: :request do
           testType: "HORN_SEQUENCE",
           result: "PASS",
           notes: "All 7 bars played",
-          conductedBy: "qa@factory.com",
           occurredAt: "2026-05-28T14:00:00Z"
         }
       end.to change { instance.test_records.count }.by(1)
@@ -54,7 +57,7 @@ RSpec.describe "Test Records", type: :request do
       expect(json["testType"]).to eq("HORN_SEQUENCE")
       expect(json["result"]).to eq("PASS")
       expect(json["notes"]).to eq("All 7 bars played")
-      expect(json["conductedBy"]).to eq("qa@factory.com")
+      expect(json["conductedBy"]).to eq("dr.quinn@example.com")
       expect(json["occurredAt"]).to eq("2026-05-28T14:00:00.000Z")
       expect(json["recordedAt"]).to be_present
       expect(json.keys).not_to include("updatedAt")
@@ -69,7 +72,6 @@ RSpec.describe "Test Records", type: :request do
           testType: "HORN_SEQUENCE",
           result: "FAIL",
           notes: "Bar 4 muted",
-          conductedBy: "qa@factory.com",
           occurredAt: "2026-05-28T14:00:00Z"
         }
       end.to change { instance.test_records.count }.by(1)
@@ -86,7 +88,6 @@ RSpec.describe "Test Records", type: :request do
       post "/instances/HMR-0001/tests", params: {
         testType: "HORN_SEQUENCE",
         result: "PASS",
-        conductedBy: "qa@factory.com",
         occurredAt: "2026-05-28T14:00:00Z",
         recordedAt: "2000-01-01T00:00:00Z"
       }
@@ -104,7 +105,6 @@ RSpec.describe "Test Records", type: :request do
       post "/instances/HMR-0001/tests", params: {
         testType: "HORN_SEQUENCE",
         result: "BOGUS",
-        conductedBy: "qa@factory.com",
         occurredAt: "2026-05-28T14:00:00Z"
       }
 
@@ -118,7 +118,6 @@ RSpec.describe "Test Records", type: :request do
 
       post "/instances/HMR-0001/tests", params: {
         result: "PASS",
-        conductedBy: "qa@factory.com",
         occurredAt: "2026-05-28T14:00:00Z"
       }
 
@@ -130,7 +129,6 @@ RSpec.describe "Test Records", type: :request do
       post "/instances/DOES-NOT-EXIST/tests", params: {
         testType: "HORN_SEQUENCE",
         result: "PASS",
-        conductedBy: "qa@factory.com",
         occurredAt: "2026-05-28T14:00:00Z"
       }
 

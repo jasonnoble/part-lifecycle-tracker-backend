@@ -28,21 +28,26 @@ RSpec.describe "Work Order step actions", type: :request do
   # The serialized component being installed into the assembly.
   let!(:component_instance) { create(:part_instance, part_definition: muzzle, serial_number: "MZL-0001") }
 
-  let(:installer) { "jamie@factory.com" }
-  let(:validator) { "riley@factory.com" }
-  let(:qa) { "quinn@factory.com" }
+  # Personas: the actor is the authenticated user (JAS-79). Pinned emails keep
+  # the OpenAPI examples deterministic. Jamie and Riley are both installers —
+  # four-eyes is an identity rule, so two installers still satisfy it.
+  let(:installer_user) { create(:user, :installer, name: "Jamie Torres", email: "jamie.torres@example.com") }
+  let(:validator_user) { create(:user, :installer, name: "Riley Park", email: "riley.park@example.com") }
+  let(:qa_user) { create(:user, :qa_engineer, name: "Dr. Quinn", email: "dr.quinn@example.com") }
 
   describe "POST /work-orders/:id/steps/:step_id/install" do
+    before { sign_in installer_user }
+
     it "installs a step with no prerequisites and appends an INSTALLED lifecycle event" do
       expect {
         post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/install",
-          params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+          params: { installedSerial: "MZL-0001" }, as: :json
       }.to change { component_instance.lifecycle_events.where(event_type: "INSTALLED").count }.by(1)
 
       expect(response).to have_http_status(:ok)
       step = json["steps"].find { |s| s["id"] == muzzle_step.id }
       expect(step["status"]).to eq("INSTALLED")
-      expect(step["installedActor"]).to eq(installer)
+      expect(step["installedActor"]).to eq("jamie.torres@example.com")
       expect(step["installedPartInstanceId"]).to eq(component_instance.id)
 
       muzzle_step.reload
@@ -50,14 +55,14 @@ RSpec.describe "Work Order step actions", type: :request do
       component_instance.reload
       expect(component_instance.current_status).to eq("INSTALLED")
       event = component_instance.lifecycle_events.where(event_type: "INSTALLED").last
-      expect(event.actor).to eq(installer)
+      expect(event.actor).to eq("jamie.torres@example.com")
       expect(event.recorded_at).to be_present
     end
 
     it "returns 409 DEPENDENCY_NOT_MET naming the blocking part when a prerequisite is not certified" do
       muzzle_step # PENDING
       post "/work-orders/#{work_order.id}/steps/#{dome_step.id}/install",
-        params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
 
       expect(response).to have_http_status(:conflict)
       expect(json["code"]).to eq("DEPENDENCY_NOT_MET")
@@ -67,22 +72,23 @@ RSpec.describe "Work Order step actions", type: :request do
     end
 
     it "allows the dependent step once the prerequisite step is certified (muzzle before dome)" do
-      # Install -> validate -> certify the muzzle step.
+      # Install -> validate -> certify the muzzle step, acting as each persona.
       post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/install",
-        params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
       expect(response).to have_http_status(:ok)
 
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate",
-        params: { actor: validator }, as: :json
+      sign_in validator_user
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate", as: :json
       expect(response).to have_http_status(:ok)
 
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify",
-        params: { actor: qa }, as: :json
+      sign_in qa_user
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify", as: :json
       expect(response).to have_http_status(:ok)
 
+      sign_in installer_user
       dome_component = create(:part_instance, part_definition: dome, serial_number: "DOME-0001")
       post "/work-orders/#{work_order.id}/steps/#{dome_step.id}/install",
-        params: { installedSerial: "DOME-0001", actor: installer }, as: :json
+        params: { installedSerial: "DOME-0001" }, as: :json
 
       expect(response).to have_http_status(:ok)
       step = json["steps"].find { |s| s["id"] == dome_step.id }
@@ -91,9 +97,9 @@ RSpec.describe "Work Order step actions", type: :request do
     end
 
     it "returns 409 INVALID_STEP_STATE when the step is not PENDING" do
-      muzzle_step.update!(status: "INSTALLED", installed_actor: installer, installed_at: Time.current)
+      muzzle_step.update!(status: "INSTALLED", installed_actor: installer_user.email, installed_at: Time.current)
       post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/install",
-        params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
 
       expect(response).to have_http_status(:conflict)
       expect(json["code"]).to eq("INVALID_STEP_STATE")
@@ -101,7 +107,7 @@ RSpec.describe "Work Order step actions", type: :request do
 
     it "returns 422 when the installedSerial is unknown" do
       post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/install",
-        params: { installedSerial: "NO-SUCH-SN", actor: installer }, as: :json
+        params: { installedSerial: "NO-SUCH-SN" }, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json["code"]).to eq("VALIDATION_FAILED")
@@ -109,46 +115,40 @@ RSpec.describe "Work Order step actions", type: :request do
 
     it "returns 404 for an unknown work order" do
       post "/work-orders/#{SecureRandom.uuid}/steps/#{muzzle_step.id}/install",
-        params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
       expect(response).to have_http_status(:not_found)
       expect(json["code"]).to eq("NOT_FOUND")
     end
 
     it "returns 404 for an unknown step" do
       post "/work-orders/#{work_order.id}/steps/#{SecureRandom.uuid}/install",
-        params: { installedSerial: "MZL-0001", actor: installer }, as: :json
+        params: { installedSerial: "MZL-0001" }, as: :json
       expect(response).to have_http_status(:not_found)
       expect(json["code"]).to eq("NOT_FOUND")
-    end
-
-    it "returns 422 when the actor is blank", openapi: false do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/install",
-        params: { installedSerial: "MZL-0001" }, as: :json
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(json["code"]).to eq("VALIDATION_FAILED")
     end
   end
 
   describe "POST /work-orders/:id/steps/:step_id/validate" do
     before do
-      muzzle_step.update!(status: "INSTALLED", installed_actor: installer, installed_at: Time.current,
+      muzzle_step.update!(status: "INSTALLED", installed_actor: installer_user.email, installed_at: Time.current,
         installed_part_instance: component_instance)
+      sign_in validator_user
     end
 
     it "validates the step by a different actor" do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate",
-        params: { actor: validator }, as: :json
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate", as: :json
 
       expect(response).to have_http_status(:ok)
       step = json["steps"].find { |s| s["id"] == muzzle_step.id }
       expect(step["status"]).to eq("VALIDATED")
-      expect(step["validatedActor"]).to eq(validator)
+      expect(step["validatedActor"]).to eq("riley.park@example.com")
       expect(muzzle_step.reload.validated_at).to be_present
     end
 
     it "returns 409 SAME_ACTOR when the validator is the installer (4-eyes)" do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate",
-        params: { actor: installer }, as: :json
+      sign_in installer_user
+
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate", as: :json
 
       expect(response).to have_http_status(:conflict)
       expect(json["code"]).to eq("SAME_ACTOR")
@@ -157,40 +157,34 @@ RSpec.describe "Work Order step actions", type: :request do
 
     it "returns 409 INVALID_STEP_STATE when the step is not INSTALLED" do
       muzzle_step.update!(status: "PENDING", installed_actor: nil, installed_at: nil, installed_part_instance: nil)
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate",
-        params: { actor: validator }, as: :json
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate", as: :json
 
       expect(response).to have_http_status(:conflict)
       expect(json["code"]).to eq("INVALID_STEP_STATE")
-    end
-
-    it "returns 422 when the actor is blank", openapi: false do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/validate", params: {}, as: :json
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(json["code"]).to eq("VALIDATION_FAILED")
     end
   end
 
   describe "POST /work-orders/:id/steps/:step_id/certify" do
     before do
-      muzzle_step.update!(status: "VALIDATED", installed_actor: installer, installed_at: Time.current,
-        validated_actor: validator, validated_at: Time.current, installed_part_instance: component_instance)
+      muzzle_step.update!(status: "VALIDATED", installed_actor: installer_user.email, installed_at: Time.current,
+        validated_actor: validator_user.email, validated_at: Time.current, installed_part_instance: component_instance)
+      sign_in qa_user
     end
 
-    it "certifies the step when the actor has the QA role" do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify",
-        params: { actor: qa }, as: :json
+    it "certifies the step when the authenticated user has the qa_engineer role" do
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify", as: :json
 
       expect(response).to have_http_status(:ok)
       step = json["steps"].find { |s| s["id"] == muzzle_step.id }
       expect(step["status"]).to eq("CERTIFIED")
-      expect(step["certifiedActor"]).to eq(qa)
+      expect(step["certifiedActor"]).to eq("dr.quinn@example.com")
       expect(muzzle_step.reload.certified_at).to be_present
     end
 
-    it "returns 403 FORBIDDEN when the actor is not QA" do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify",
-        params: { actor: validator }, as: :json
+    it "returns 403 FORBIDDEN when the authenticated user's role is not qa_engineer" do
+      sign_in validator_user
+
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify", as: :json
 
       expect(response).to have_http_status(:forbidden)
       expect(json["code"]).to eq("FORBIDDEN")
@@ -199,17 +193,10 @@ RSpec.describe "Work Order step actions", type: :request do
 
     it "returns 409 INVALID_STEP_STATE when the step is not VALIDATED" do
       muzzle_step.update!(status: "INSTALLED", validated_actor: nil, validated_at: nil)
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify",
-        params: { actor: qa }, as: :json
+      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify", as: :json
 
       expect(response).to have_http_status(:conflict)
       expect(json["code"]).to eq("INVALID_STEP_STATE")
-    end
-
-    it "returns 422 when the actor is blank", openapi: false do
-      post "/work-orders/#{work_order.id}/steps/#{muzzle_step.id}/certify", params: {}, as: :json
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(json["code"]).to eq("VALIDATION_FAILED")
     end
   end
 end

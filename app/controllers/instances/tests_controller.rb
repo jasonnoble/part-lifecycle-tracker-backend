@@ -36,7 +36,8 @@ module Instances
         test_type: params[:testType],
         result: params[:result],
         notes: params[:notes],
-        conducted_by: params[:conductedBy],
+        # Recorded from the authenticated identity, never client-supplied (JAS-79).
+        conducted_by: current_user.email,
         occurred_at: params[:occurredAt]
       }
     end

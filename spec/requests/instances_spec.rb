@@ -213,6 +213,10 @@ RSpec.describe "Instances", type: :request do
   end
 
   describe "POST /instances/:serial/events" do
+    # The actor is the authenticated user (JAS-79); a pinned email keeps every
+    # generated OpenAPI example for this path deterministic.
+    before { sign_in create(:user, :installer, email: "jamie.torres@example.com") }
+
     it "appends an event and updates current_status to the new event type" do
       part = create(:part_definition, part_number: "THE-HOMER-001")
       instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001", current_status: "RECEIVED")
@@ -220,7 +224,6 @@ RSpec.describe "Instances", type: :request do
       expect do
         post "/instances/HMR-0001/events", params: {
           eventType: "IN_ASSEMBLY",
-          actor: "tech@factory.com",
           notes: "Started assembly",
           occurredAt: "2026-05-29T10:00:00Z",
           metadata: { station: "A" }
@@ -229,7 +232,7 @@ RSpec.describe "Instances", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(json["eventType"]).to eq("IN_ASSEMBLY")
-      expect(json["actor"]).to eq("tech@factory.com")
+      expect(json["actor"]).to eq("jamie.torres@example.com")
       expect(json["occurredAt"]).to eq("2026-05-29T10:00:00.000Z")
       expect(json["recordedAt"]).to be_present
       expect(instance.reload.current_status).to eq("IN_ASSEMBLY")
@@ -248,7 +251,6 @@ RSpec.describe "Instances", type: :request do
 
       post "/instances/HMR-0001/events", params: {
         eventType: "INSPECTED",
-        actor: "qa@factory.com",
         occurredAt: "2026-05-29T10:00:00Z",
         recordedAt: client_recorded
       }
@@ -265,7 +267,6 @@ RSpec.describe "Instances", type: :request do
 
       post "/instances/HMR-0001/events", params: {
         eventType: "BOGUS",
-        actor: "tech@factory.com",
         occurredAt: "2026-05-29T10:00:00Z"
       }
 
@@ -278,8 +279,7 @@ RSpec.describe "Instances", type: :request do
       create(:part_instance, part_definition: part, serial_number: "HMR-0001")
 
       post "/instances/HMR-0001/events", params: {
-        eventType: "INSPECTED",
-        actor: "tech@factory.com"
+        eventType: "INSPECTED"
       }
 
       expect(response).to have_http_status(:unprocessable_content)
@@ -289,7 +289,6 @@ RSpec.describe "Instances", type: :request do
     it "returns 404 for an unknown serial" do
       post "/instances/DOES-NOT-EXIST/events", params: {
         eventType: "INSPECTED",
-        actor: "tech@factory.com",
         occurredAt: "2026-05-29T10:00:00Z"
       }
 

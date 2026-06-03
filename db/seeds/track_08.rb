@@ -71,7 +71,7 @@ EVENT_ANCHOR = Time.utc(2026, 5, 28, 9, 0, 0)
 # Tells a fix-and-retest story and exercises every result badge: an initial FAIL,
 # its PASS retest, an INCONCLUSIVE re-run, and a final PASS sign-off.
 HOMER_TEST_RECORD_SERIAL = "HMR-0016" # one of the two CERTIFIED instances above
-HOMER_QA = "quinn@factory.com"        # Dr. Quinn, QA / certifying authority
+HOMER_QA = "dr.quinn@example.com"     # Dr. Quinn, qa_engineer (seeded user)
 HOMER_TEST_RECORDS = [
   { test_type: "HORN_SEQUENCE", result: "FAIL",
     occurred_at: Time.utc(2026, 5, 26, 13, 0, 0),
@@ -112,7 +112,7 @@ SeedHelper.step("seed #{HOMER_INSTANCE_ROSTER.size} The Homer instances (idempot
       {
         part_instance_id: instance.id,
         event_type: event_type,
-        actor: "jamie@factory.com",
+        actor: "jamie.torres@example.com",
         occurred_at: base + (step * 1).minutes,
         notes: "#{serial_number} -> #{event_type}"
       }

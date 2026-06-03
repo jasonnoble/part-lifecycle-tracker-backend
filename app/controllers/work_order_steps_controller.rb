@@ -2,22 +2,13 @@ class WorkOrderStepsController < ApplicationController
   STEP_INCLUDES = { work_order_steps: { bom_item: :child } }.freeze
   ORDER_INCLUDES = [ :part_definition, :part_instance, STEP_INCLUDES ].freeze
 
-  # v0 has no real auth. QA sign-off (certify) is gated on a hardcoded allowlist;
-  # the seeded QA engineer is Dr. Quinn. Replace with session-based roles post-v0.
-  QA_ACTORS = %w[quinn@factory.com].freeze
-
   # POST /work-orders/:id/steps/:step_id/install
-  # Body: { "installedSerial": "...", "actor": "..." }
+  # Body: { "installedSerial": "..." } — the actor is the authenticated user.
   def install
     step = find_step!
 
     unless step.PENDING?
       return render_error("Step is not PENDING (current: #{step.status})", "INVALID_STEP_STATE", :conflict)
-    end
-
-    actor = params[:actor]
-    if actor.blank?
-      return render_error("actor can't be blank", "VALIDATION_FAILED", :unprocessable_content)
     end
 
     blocking = uncertified_prerequisite(step)
@@ -37,14 +28,14 @@ class WorkOrderStepsController < ApplicationController
     now = Time.current
     WorkOrderStep.transaction do
       step.installed_part_instance = instance
-      step.installed_actor = actor
+      step.installed_actor = current_user.email
       step.installed_at = now
       step.install # AASM PENDING -> INSTALLED
       step.save!
 
       instance.lifecycle_events.create!(
         event_type: "INSTALLED",
-        actor: actor,
+        actor: current_user.email,
         occurred_at: now,
         recorded_at: now
       )
@@ -57,7 +48,7 @@ class WorkOrderStepsController < ApplicationController
   end
 
   # POST /work-orders/:id/steps/:step_id/validate
-  # Body: { "actor": "..." }
+  # The actor is the authenticated user.
   def validate_step
     step = find_step!
 
@@ -65,14 +56,11 @@ class WorkOrderStepsController < ApplicationController
       return render_error("Step is not INSTALLED (current: #{step.status})", "INVALID_STEP_STATE", :conflict)
     end
 
-    actor = params[:actor]
-    if actor.blank?
-      return render_error("actor can't be blank", "VALIDATION_FAILED", :unprocessable_content)
-    end
-
-    # Four-eyes: the validator must differ from the installer. Checked here BEFORE
-    # writing; the work_order_steps_four_eyes DB CHECK is the backstop.
-    if actor == step.installed_actor
+    # Four-eyes: the validator must differ from the installer — an identity
+    # rule on the authenticated user, not a role rule (two installers are fine).
+    # Checked here BEFORE writing; the work_order_steps_four_eyes DB CHECK is
+    # the backstop.
+    if current_user.email == step.installed_actor
       return render_error(
         "Validator must differ from the installer (#{step.installed_actor})",
         "SAME_ACTOR",
@@ -80,7 +68,7 @@ class WorkOrderStepsController < ApplicationController
       )
     end
 
-    step.validated_actor = actor
+    step.validated_actor = current_user.email
     step.validated_at = Time.current
     step.validate_step # AASM INSTALLED -> VALIDATED
     step.save!
@@ -91,7 +79,8 @@ class WorkOrderStepsController < ApplicationController
   end
 
   # POST /work-orders/:id/steps/:step_id/certify
-  # Body: { "actor": "..." }
+  # The actor is the authenticated user; certification requires the assigned
+  # qa_engineer role (never client-supplied — see JAS-75/JAS-79).
   def certify
     step = find_step!
 
@@ -99,16 +88,15 @@ class WorkOrderStepsController < ApplicationController
       return render_error("Step is not VALIDATED (current: #{step.status})", "INVALID_STEP_STATE", :conflict)
     end
 
-    actor = params[:actor]
-    if actor.blank?
-      return render_error("actor can't be blank", "VALIDATION_FAILED", :unprocessable_content)
+    unless Permissions.can?(current_user, "step.certify")
+      return render_error(
+        "#{current_user.email} is not authorized to certify (qa_engineer role required)",
+        "FORBIDDEN",
+        :forbidden
+      )
     end
 
-    unless QA_ACTORS.include?(actor)
-      return render_error("Actor #{actor} is not authorized to certify (QA role required)", "FORBIDDEN", :forbidden)
-    end
-
-    step.certified_actor = actor
+    step.certified_actor = current_user.email
     step.certified_at = Time.current
     step.certify # AASM VALIDATED -> CERTIFIED
     step.save!

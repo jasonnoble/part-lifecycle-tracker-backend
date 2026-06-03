@@ -408,6 +408,23 @@ paths:
                 partNumber: THE-HOMER-001
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
+        '403':
+          description: rejects writes from a read-only session with 403 READ_ONLY
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: 'Read-only session: no assigned role for this account'
+                code: READ_ONLY
         '422':
           description: returns 422 on duplicate serialNumber
           content:
@@ -574,7 +591,6 @@ paths:
                   format: date-time
               required:
               - eventType
-              - actor
               - occurredAt
             example:
               eventType: INSPECTED
@@ -627,7 +643,7 @@ paths:
               example:
                 id: 00000000-0000-0000-0000-000000000000
                 eventType: INSPECTED
-                actor: qa@factory.com
+                actor: jamie.torres@example.com
                 notes:
                 metadata:
                 occurredAt: '2026-01-01T00:00:00.000Z'
@@ -812,7 +828,6 @@ paths:
               required:
               - testType
               - result
-              - conductedBy
               - occurredAt
             example:
               testType: HORN_SEQUENCE
@@ -860,7 +875,7 @@ paths:
                 testType: HORN_SEQUENCE
                 result: PASS
                 notes:
-                conductedBy: qa@factory.com
+                conductedBy: dr.quinn@example.com
                 occurredAt: '2026-01-01T00:00:00.000Z'
                 recordedAt: '2026-01-01T00:00:00.000Z'
         '404':
@@ -986,6 +1001,10 @@ paths:
                   role:
                     type: string
                     nullable: true
+                  permissions:
+                    type: array
+                    items:
+                      type: string
                 required:
                 - email
                 - name
@@ -994,6 +1013,7 @@ paths:
                 email:
                 name:
                 role:
+                permissions: []
         '401':
           description: returns 401 when the session token is invalid or expired
           content:
@@ -2976,16 +2996,12 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                actor:
-                  type: string
-              required:
-              - actor
-            example:
-              actor: quinn@factory.com
+              properties: {}
+            example: {}
       responses:
         '200':
-          description: certifies the step when the actor has the QA role
+          description: certifies the step when the authenticated user has the qa_engineer
+            role
           content:
             application/json:
               schema:
@@ -3072,9 +3088,9 @@ paths:
                   bomItemId: 00000000-0000-0000-0000-000000000000
                   status: CERTIFIED
                   installedPartInstanceId: 00000000-0000-0000-0000-000000000000
-                  installedActor: jamie@factory.com
-                  validatedActor: riley@factory.com
-                  certifiedActor: quinn@factory.com
+                  installedActor: jamie.torres@example.com
+                  validatedActor: riley.park@example.com
+                  certifiedActor: dr.quinn@example.com
                   childPartNumber: MUZZLE-001
                   childPartName: Muzzle
                   installedAt: '2026-01-01T00:00:00.000Z'
@@ -3083,7 +3099,8 @@ paths:
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
         '403':
-          description: returns 403 FORBIDDEN when the actor is not QA
+          description: returns 403 FORBIDDEN when the authenticated user's role is
+            not qa_engineer
           content:
             application/json:
               schema:
@@ -3097,8 +3114,8 @@ paths:
                 - error
                 - code
               example:
-                error: Actor riley@factory.com is not authorized to certify (QA role
-                  required)
+                error: riley.park@example.com is not authorized to certify (qa_engineer
+                  role required)
                 code: FORBIDDEN
         '409':
           description: returns 409 INVALID_STEP_STATE when the step is not VALIDATED
@@ -3143,14 +3160,10 @@ paths:
               properties:
                 installedSerial:
                   type: string
-                actor:
-                  type: string
               required:
               - installedSerial
-              - actor
             example:
               installedSerial: DOME-0001
-              actor: jamie@factory.com
       responses:
         '200':
           description: allows the dependent step once the prerequisite step is certified
@@ -3243,9 +3256,9 @@ paths:
                   bomItemId: 00000000-0000-0000-0000-000000000000
                   status: CERTIFIED
                   installedPartInstanceId: 00000000-0000-0000-0000-000000000000
-                  installedActor: jamie@factory.com
-                  validatedActor: riley@factory.com
-                  certifiedActor: quinn@factory.com
+                  installedActor: jamie.torres@example.com
+                  validatedActor: riley.park@example.com
+                  certifiedActor: dr.quinn@example.com
                   childPartNumber: MUZZLE-001
                   childPartName: Muzzle
                   installedAt: '2026-01-01T00:00:00.000Z'
@@ -3255,7 +3268,7 @@ paths:
                   bomItemId: 00000000-0000-0000-0000-000000000000
                   status: INSTALLED
                   installedPartInstanceId: 00000000-0000-0000-0000-000000000000
-                  installedActor: jamie@factory.com
+                  installedActor: jamie.torres@example.com
                   validatedActor:
                   certifiedActor:
                   childPartNumber: DOME-TRANS-001
@@ -3340,13 +3353,8 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                actor:
-                  type: string
-              required:
-              - actor
-            example:
-              actor: riley@factory.com
+              properties: {}
+            example: {}
       responses:
         '200':
           description: validates the step by a different actor
@@ -3436,8 +3444,8 @@ paths:
                   bomItemId: 00000000-0000-0000-0000-000000000000
                   status: VALIDATED
                   installedPartInstanceId: 00000000-0000-0000-0000-000000000000
-                  installedActor: jamie@factory.com
-                  validatedActor: riley@factory.com
+                  installedActor: jamie.torres@example.com
+                  validatedActor: riley.park@example.com
                   certifiedActor:
                   childPartNumber: MUZZLE-001
                   childPartName: Muzzle
