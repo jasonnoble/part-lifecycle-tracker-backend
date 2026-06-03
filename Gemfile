@@ -74,4 +74,7 @@ gem "pagy", "~> 43.5"
 # State machines for status lifecycles (Part Definition, PO lines, etc.)
 gem "aasm", "~> 5.5"
 
+
+# Stytch authentication (official backend SDK) — session JWT verification
+gem "stytch", "~> 7.0"
 gem "rack-cors", "~> 3.0"

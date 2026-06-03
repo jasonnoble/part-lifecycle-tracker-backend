@@ -2,6 +2,9 @@
 # Mounted in development only (see config/routes.rb). The spec itself is
 # generated from request specs via `OPENAPI=1 bundle exec rspec` (JAS-60).
 class ApiDocsController < ApplicationController
+  # Dev-only docs viewer; no session to authenticate against.
+  skip_before_action :authenticate_session!
+
   VIEWER_HTML = <<~HTML.freeze
     <!DOCTYPE html>
     <html>

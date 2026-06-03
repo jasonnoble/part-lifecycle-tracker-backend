@@ -964,6 +964,53 @@ paths:
                 error: Couldn't find PartInstance with [WHERE "part_instances"."serial_number"
                   = $1]
                 code: NOT_FOUND
+  "/me":
+    get:
+      summary: show
+      tags:
+      - Me
+      responses:
+        '200':
+          description: authenticates as read-only / no-role (null identity, not 401)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    nullable: true
+                  name:
+                    type: string
+                    nullable: true
+                  role:
+                    type: string
+                    nullable: true
+                required:
+                - email
+                - name
+                - role
+              example:
+                email:
+                name:
+                role:
+        '401':
+          description: returns 401 when the session token is invalid or expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: Authentication required
+                code: UNAUTHENTICATED
   "/parts":
     get:
       summary: index

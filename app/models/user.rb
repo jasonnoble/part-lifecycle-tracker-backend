@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
+  validates :stytch_user_id, uniqueness: true, allow_nil: true
 
   enum :role,
        {

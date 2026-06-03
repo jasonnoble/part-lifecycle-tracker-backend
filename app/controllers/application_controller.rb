@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::API
   include Pagy::Method
+  include Authentication
 
   rescue_from ActiveRecord::RecordNotFound do |error|
     render_error(error.message, "NOT_FOUND", :not_found)

@@ -10,5 +10,6 @@ FactoryBot.define do
     email { Faker::Internet.email(domain: "example.com", name: name) }
     name { Faker::Name.name }
     role { 'installer' }
+    sequence(:stytch_user_id) { |n| "user-test-#{n}" }
   end
 end

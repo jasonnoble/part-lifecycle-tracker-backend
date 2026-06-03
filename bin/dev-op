@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Run the app (or any command) locally with RAILS_MASTER_KEY injected from
+# 1Password, so the key never lives on disk. Mirrors the reference used by
+# .kamal/secrets at deploy time — one 1Password item, one reference string.
+#
+#   bin/dev-op                       # starts the server (bin/dev)
+#   bin/dev-op bin/rails db:migrate  # run any command with the key injected
+#
+# The reference is a 1Password secret reference (not a secret), so this file is
+# safe to commit. Requires the 1Password CLI (`op`) and an unlocked session.
+set -euo pipefail
+
+REF="op://Private/pew2xrlhjkle7btnvi2y52e2ay/PART_LIFECYCLE_RAILS_MASTER_KEY"
+
+key="$(op read "$REF")"
+exec env RAILS_MASTER_KEY="$key" "${@:-bin/dev}"

@@ -37,6 +37,8 @@ users = [
   { name: "Alex Reyes", email: "alex.reyes@example.com", role: "site_manager" }
 ]
 
+# stytch_user_id is populated out-of-band by StytchUserSync (rails stytch:sync_users),
+# not here — seeding stays keyless and makes no external API calls.
 SeedHelper.track("  Track 6-1 — Add seeded users")
 User.upsert_all(users, unique_by: :email)
 
