@@ -24,9 +24,21 @@ SeedHelper.track("Track 6 — Work Orders in various states (JAS-40)")
 
 # Seeded personas. Installer and validator/certifier are always distinct so the
 # work_order_steps_four_eyes CHECK (validated_actor <> installed_actor) holds.
-INSTALLER = "jamie@factory.com"  # Jamie Torres, assembly technician
-VALIDATOR = "riley@factory.com"  # Riley Park, validation technician
-QA        = "quinn@factory.com"  # Dr. Quinn, QA / certifying authority
+INSTALLER = "jamie@factory.com" # Jamie Torres, assembly technician
+VALIDATOR = "riley@factory.com" # Riley Park, validation technician
+QA = "quinn@factory.com" # Dr. Quinn, QA / certifying authority
+
+users = [
+  { name: "Sarah Chen", email: "sarah.chen@example.com", role: "salesperson" },
+  { name: "Marcus Webb", email: "marcus.webb@example.com", role: "floor_manager" },
+  { name: "Jamie Torres", email: "jamie.torres@example.com", role: "installer" },
+  { name: "Riley Park", email: "riley.park@example.com", role: "installer" },
+  { name: "Dr. Quinn", email: "dr.quinn@example.com", role: "qa_engineer" },
+  { name: "Alex Reyes", email: "alex.reyes@example.com", role: "site_manager" }
+]
+
+SeedHelper.track("  Track 6-1 — Add seeded users")
+User.upsert_all(users, unique_by: :email)
 
 homer = PartDefinition.find_by!(part_number: "THE-HOMER-001")
 
@@ -36,8 +48,8 @@ homer = PartDefinition.find_by!(part_number: "THE-HOMER-001")
 HOMER_STEP_ORDER = %w[MUZZLE-001 DOME-TRANS-001 ENGINE-V8-001 HORN-LCC-001].freeze
 
 homer_bom_items = BomItem.where(parent_part_definition_id: homer.id)
-  .includes(:child)
-  .index_by { |bi| bi.child.part_number }
+                         .includes(:child)
+                         .index_by { |bi| bi.child.part_number }
 
 ordered_bom_items = HOMER_STEP_ORDER.filter_map { |pn| homer_bom_items[pn] }
 
@@ -48,7 +60,7 @@ ordered_bom_items = HOMER_STEP_ORDER.filter_map { |pn| homer_bom_items[pn] }
 def find_or_create_homer_instance(serial:, status:, homer:)
   PartInstance.find_or_create_by!(serial_number: serial) do |pi|
     pi.part_definition = homer
-    pi.current_status  = status
+    pi.current_status = status
   end
 end
 
@@ -66,7 +78,7 @@ SeedHelper.step("WO-0001 (COMPLETE) — HMR-0047, all steps certified") do
 
   wo = WorkOrder.find_or_create_by!(part_instance_id: instance.id) do |w|
     w.part_definition = homer
-    w.status          = "COMPLETE"
+    w.status = "COMPLETE"
   end
   wo.update!(status: "COMPLETE") unless wo.status == "COMPLETE"
 
@@ -75,14 +87,14 @@ SeedHelper.step("WO-0001 (COMPLETE) — HMR-0047, all steps certified") do
     step = WorkOrderStep.find_or_create_by!(work_order_id: wo.id, bom_item_id: bom_item.id)
     base = t0 + (i * 2).hours
     set_step!(step, {
-      status:               "CERTIFIED",
+      status: "CERTIFIED",
       installed_part_instance_id: instance.id,
-      installed_actor:      INSTALLER,
-      installed_at:         base,
-      validated_actor:      VALIDATOR,
-      validated_at:         base + 30.minutes,
-      certified_actor:      QA,
-      certified_at:         base + 1.hour
+      installed_actor: INSTALLER,
+      installed_at: base,
+      validated_actor: VALIDATOR,
+      validated_at: base + 30.minutes,
+      certified_actor: QA,
+      certified_at: base + 1.hour
     })
   end
 end
@@ -94,7 +106,7 @@ SeedHelper.step("WO-0002 (OPEN) — HMR-0006, in progress with a blocked step") 
 
   wo = WorkOrder.find_or_create_by!(part_instance_id: instance.id) do |w|
     w.part_definition = homer
-    w.status          = "OPEN"
+    w.status = "OPEN"
   end
   wo.update!(status: "OPEN") unless wo.status == "OPEN"
 
@@ -103,10 +115,10 @@ SeedHelper.step("WO-0002 (OPEN) — HMR-0006, in progress with a blocked step") 
   # (its muzzle prerequisite is in but stock for the dome is short), engine
   # installed, horn still pending. Demonstrates INSTALLED + BLOCKED + PENDING.
   step_plan = {
-    "MUZZLE-001"     => :installed_validated,
+    "MUZZLE-001" => :installed_validated,
     "DOME-TRANS-001" => :blocked,
-    "ENGINE-V8-001"  => :installed,
-    "HORN-LCC-001"   => :pending
+    "ENGINE-V8-001" => :installed,
+    "HORN-LCC-001" => :pending
   }
 
   ordered_bom_items.each_with_index do |bom_item, i|
@@ -138,7 +150,8 @@ SeedHelper.step("WO-0002 (OPEN) — HMR-0006, in progress with a blocked step") 
           validated_actor: nil, validated_at: nil,
           certified_actor: nil, certified_at: nil
         }
-      else # :pending
+      else
+        # :pending
         {
           status: "PENDING",
           installed_part_instance_id: nil,
@@ -158,7 +171,7 @@ SeedHelper.step("WO-0003 (BLOCKED) — HMR-0007, waiting on stock") do
 
   wo = WorkOrder.find_or_create_by!(part_instance_id: instance.id) do |w|
     w.part_definition = homer
-    w.status          = "BLOCKED"
+    w.status = "BLOCKED"
   end
   wo.update!(status: "BLOCKED") unless wo.status == "BLOCKED"
 

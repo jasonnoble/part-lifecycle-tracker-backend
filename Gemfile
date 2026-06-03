@@ -59,6 +59,10 @@ group :development, :test do
   gem "undercover", require: false
 end
 
+group :test do
+  gem "shoulda-matchers", "~> 7.0"
+end
+
 gem "alba", "~> 3.10"
 
 gem "oj", "~> 3.17"
