@@ -52,30 +52,13 @@ RSpec.describe StytchAuthenticator do
   end
 
   describe "#client" do
-    it "builds a memoized Stytch::Client from the configured credentials" do
-      allow(authenticator).to receive(:config)
-        .and_return(project_id: "project-test-1", secret: "secret-1", env: :test)
+    it "memoizes the client built by StytchClient" do
       fake_client = instance_double(Stytch::Client)
-      expect(Stytch::Client).to receive(:new)
-        .with(project_id: "project-test-1", secret: "secret-1", env: :test)
-        .once.and_return(fake_client)
+      allow(StytchClient).to receive(:build).and_return(fake_client)
 
       expect(authenticator.send(:client)).to be(fake_client)
-      expect(authenticator.send(:client)).to be(fake_client) # memoized: new called once
-    end
-  end
-
-  describe "#config" do
-    it "reads the stytch section of Rails credentials" do
-      allow(Rails.application.credentials).to receive(:stytch).and_return(project_id: "p", secret: "s")
-
-      expect(authenticator.send(:config)).to eq(project_id: "p", secret: "s")
-    end
-
-    it "falls back to an empty hash when no stytch credentials are present" do
-      allow(Rails.application.credentials).to receive(:stytch).and_return(nil)
-
-      expect(authenticator.send(:config)).to eq({})
+      authenticator.send(:client)
+      expect(StytchClient).to have_received(:build).once # memoized
     end
   end
 end

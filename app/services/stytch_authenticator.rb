@@ -41,15 +41,6 @@ class StytchAuthenticator
   private
 
   def client
-    @client ||= Stytch::Client.new(
-      project_id: config.fetch(:project_id),
-      secret: config.fetch(:secret),
-      env: config[:env]
-    )
-  end
-
-  # `env` is optional — the SDK infers live vs. test from the project_id prefix.
-  def config
-    Rails.application.credentials.stytch || {}
+    @client ||= StytchClient.build
   end
 end

@@ -37,23 +37,8 @@ users = [
   { name: "Alex Reyes", email: "alex.reyes@example.com", role: "site_manager" }
 ]
 
-# Link personas to their Stytch user_ids when provisioned (JAS-76). Supply the
-# mapping via credentials (`stytch.user_ids: { "sarah.chen@example.com": "user-..." }`)
-# and re-seed; absent a mapping, stytch_user_id stays nil and the persona simply
-# isn't matched to an authenticated session yet.
-#
-# Reading credentials forces decryption, so guard it: a fresh checkout or keyless
-# CI (no/!wrong master key) must still seed — the mapping is optional, so we fall
-# back to none rather than failing the whole seed run.
-stytch_user_ids =
-  begin
-    (Rails.application.credentials.dig(:stytch, :user_ids) || {}).with_indifferent_access
-  rescue ActiveSupport::MessageEncryptor::InvalidMessage, ActiveSupport::EncryptedConfiguration::MissingKeyError
-    puts "  (no/unreadable master key — skipping Stytch user_id mapping)"
-    {}.with_indifferent_access
-  end
-users.each { |u| u[:stytch_user_id] = stytch_user_ids[u[:email]] }
-
+# stytch_user_id is populated out-of-band by StytchUserSync (rails stytch:sync_users),
+# not here — seeding stays keyless and makes no external API calls.
 SeedHelper.track("  Track 6-1 — Add seeded users")
 User.upsert_all(users, unique_by: :email)
 
