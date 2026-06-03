@@ -38,7 +38,9 @@ module Instances
     def event_params
       {
         event_type: params[:eventType],
-        actor: params[:actor],
+        # The actor is always the authenticated identity, never client-supplied
+        # (JAS-79). Write access is guaranteed by the read-only gate upstream.
+        actor: current_user.email,
         notes: params[:notes],
         metadata: params[:metadata],
         occurred_at: params[:occurredAt]
