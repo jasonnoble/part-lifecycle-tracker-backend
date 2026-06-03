@@ -12,12 +12,15 @@ class Permissions
   ALL_ROLES = User.roles.keys.freeze
 
   # Ability => roles allowed. Unknown abilities raise (fail loud on typos).
+  # Assembly work is the installers' job (validate included — four-eyes makes
+  # it a *different* installer, not a different role); QA owns certification
+  # and test records. Lifecycle events stay open to any assigned role.
   ABILITIES = {
-    "step.install" => ALL_ROLES,
-    "step.validate" => ALL_ROLES,
+    "step.install" => %w[installer].freeze,
+    "step.validate" => %w[installer].freeze,
     "step.certify" => %w[qa_engineer].freeze,
     "instance.record_event" => ALL_ROLES,
-    "instance.record_test" => ALL_ROLES
+    "instance.record_test" => %w[qa_engineer].freeze
   }.freeze
 
   def self.can?(user, ability)

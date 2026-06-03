@@ -135,5 +135,22 @@ RSpec.describe "Test Records", type: :request do
       expect(response).to have_http_status(:not_found)
       expect(json["code"]).to eq("NOT_FOUND")
     end
+
+    it "returns 403 FORBIDDEN when the authenticated user is not qa_engineer" do
+      part = create(:part_definition, part_number: "THE-HOMER-001")
+      instance = create(:part_instance, part_definition: part, serial_number: "HMR-0001")
+      sign_in create(:user, :installer, email: "jamie.torres@example.com")
+
+      expect do
+        post "/instances/HMR-0001/tests", params: {
+          testType: "HORN_SEQUENCE",
+          result: "PASS",
+          occurredAt: "2026-05-28T14:00:00Z"
+        }
+      end.not_to change { instance.test_records.count }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(json["code"]).to eq("FORBIDDEN")
+    end
   end
 end

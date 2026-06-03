@@ -14,6 +14,14 @@ module Instances
     end
 
     def create
+      unless Permissions.can?(current_user, "instance.record_test")
+        return render_error(
+          "#{current_user.email} is not authorized to record tests (qa_engineer role required)",
+          "FORBIDDEN",
+          :forbidden
+        )
+      end
+
       record = @instance.test_records.new(test_record_params)
 
       # recorded_at is ALWAYS server-set and never accepted from the client.

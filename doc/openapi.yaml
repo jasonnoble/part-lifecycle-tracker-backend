@@ -804,7 +804,7 @@ paths:
         required: true
         schema:
           type: string
-        example: DOES-NOT-EXIST
+        example: HMR-0001
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -878,6 +878,24 @@ paths:
                 conductedBy: dr.quinn@example.com
                 occurredAt: '2026-01-01T00:00:00.000Z'
                 recordedAt: '2026-01-01T00:00:00.000Z'
+        '403':
+          description: returns 403 FORBIDDEN when the authenticated user is not qa_engineer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: jamie.torres@example.com is not authorized to record tests
+                  (qa_engineer role required)
+                code: FORBIDDEN
         '404':
           description: returns 404 for an unknown serial
           content:
@@ -3278,6 +3296,25 @@ paths:
                   certifiedAt:
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
+        '403':
+          description: returns 403 FORBIDDEN when the authenticated user is not an
+            installer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: dr.quinn@example.com is not authorized to install (installer
+                  role required)
+                code: FORBIDDEN
         '404':
           description: returns 404 for an unknown step
           content:
@@ -3454,6 +3491,25 @@ paths:
                   certifiedAt:
                 createdAt: '2026-01-01T00:00:00.000Z'
                 updatedAt: '2026-01-01T00:00:00.000Z'
+        '403':
+          description: returns 403 FORBIDDEN when the authenticated user is not an
+            installer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+                required:
+                - error
+                - code
+              example:
+                error: dr.quinn@example.com is not authorized to validate (installer
+                  role required)
+                code: FORBIDDEN
         '409':
           description: returns 409 INVALID_STEP_STATE when the step is not INSTALLED
           content:

@@ -41,10 +41,7 @@ RSpec.describe "Authentication", type: :request do
         "email" => "dr.quinn@example.com",
         "name" => "Dr. Quinn",
         "role" => "qa_engineer",
-        "permissions" => [
-          "step.install", "step.validate", "step.certify",
-          "instance.record_event", "instance.record_test"
-        ]
+        "permissions" => [ "step.certify", "instance.record_event", "instance.record_test" ]
       )
     end
 

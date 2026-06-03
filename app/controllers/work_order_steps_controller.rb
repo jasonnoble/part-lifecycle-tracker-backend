@@ -3,12 +3,21 @@ class WorkOrderStepsController < ApplicationController
   ORDER_INCLUDES = [ :part_definition, :part_instance, STEP_INCLUDES ].freeze
 
   # POST /work-orders/:id/steps/:step_id/install
-  # Body: { "installedSerial": "..." } — the actor is the authenticated user.
+  # Body: { "installedSerial": "..." } — the actor is the authenticated user,
+  # and installing is the installers' job.
   def install
     step = find_step!
 
     unless step.PENDING?
       return render_error("Step is not PENDING (current: #{step.status})", "INVALID_STEP_STATE", :conflict)
+    end
+
+    unless Permissions.can?(current_user, "step.install")
+      return render_error(
+        "#{current_user.email} is not authorized to install (installer role required)",
+        "FORBIDDEN",
+        :forbidden
+      )
     end
 
     blocking = uncertified_prerequisite(step)
@@ -48,12 +57,21 @@ class WorkOrderStepsController < ApplicationController
   end
 
   # POST /work-orders/:id/steps/:step_id/validate
-  # The actor is the authenticated user.
+  # The actor is the authenticated user; validating is also installer work —
+  # four-eyes requires a *different* installer, not a different role.
   def validate_step
     step = find_step!
 
     unless step.INSTALLED?
       return render_error("Step is not INSTALLED (current: #{step.status})", "INVALID_STEP_STATE", :conflict)
+    end
+
+    unless Permissions.can?(current_user, "step.validate")
+      return render_error(
+        "#{current_user.email} is not authorized to validate (installer role required)",
+        "FORBIDDEN",
+        :forbidden
+      )
     end
 
     # Four-eyes: the validator must differ from the installer — an identity
