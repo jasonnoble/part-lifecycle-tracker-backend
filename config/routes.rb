@@ -8,6 +8,9 @@ Rails.application.routes.draw do
   # Authenticated user identity (email/name/assigned role)
   get "me" => "me#show"
 
+  # Demo-login bootstrap: mints a Stytch session for a seeded demo persona (JAS-80)
+  post "demo-sessions" => "demo_sessions#create"
+
   resources :parts, param: :part_number, only: %i[index show create update] do
     member do
       post :status, action: :update_status
