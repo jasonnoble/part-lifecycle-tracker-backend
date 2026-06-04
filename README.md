@@ -254,10 +254,17 @@ Repeat install → validate → certify for the engine (`DEMO-ENG-001`) and horn
 ```bash
 curl -s -X POST "$BASE/instances/DEMO-HMR-001/tests" \
   -H "Authorization: Bearer $QUINN" -H 'Content-Type: application/json' \
-  -d '{"testType": "FINAL_QA", "result": "PASS", "notes": "All systems nominal"}'
+  -d '{
+    "testType": "FINAL_QA",
+    "result": "PASS",
+    "notes": "All systems nominal",
+    "occurredAt": "2026-06-04T15:30:00Z"
+  }'
 ```
 
 Results are `PASS` / `FAIL` / `INCONCLUSIVE`; only `qa_engineer` may record them.
+`occurredAt` (when the test physically happened) is required and may differ
+from `recordedAt`, which the API stamps itself.
 
 > Seeded by `db/seeds/track_08.rb` — `HMR-0016` (a certified unit) carries a
 > full QA history: HORN_SEQUENCE `FAIL` → `PASS` on retest, DOME_PRESSURE
@@ -284,7 +291,7 @@ One self-contained response: inventory counts by status, open purchase orders,
 the BOM with available stock per child, the five most recent lifecycle events,
 and a `summary` string built from a fixed template (deterministic — **not**
 LLM-generated), e.g.
-`"The Homer. Rev B released. 16 instances created, 4 in assembly, 3 certified."`
+`"The Homer. Rev B released. 24 instances created, 9 in assembly, 4 certified."`
 Your `DEMO-HMR-001` shows up in the totals, the certified count, and the
 recent events.
 
