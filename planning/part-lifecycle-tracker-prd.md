@@ -11,7 +11,7 @@
 
 ## What this is
 
-A full-stack manufacturing app that tracks a "part" across its entire lifecycle — from a customer placing an order, through supplier purchasing and physical receipt, through assembly with enforced build order and dual sign-off, to a certified finished unit. It is built as a **portfolio piece** (Boom Supersonic application) and doubles as the subject of a "How I Built This" blog series, so the design decisions are first-class artifacts, not just implementation details.
+A full-stack manufacturing app that tracks a "part" across its entire lifecycle — from a customer placing an order, through supplier purchasing and physical receipt, through assembly with enforced build order and dual sign-off, to a certified finished unit. It is built as a **portfolio piece** and the subject of a "How I Built This" blog series, so the design decisions are first-class artifacts, not just implementation details.
 
 The central design bet: **separate what a part is supposed to be (the Part Definition / design) from what physically exists (the Part Instance / serialized object), and record every change to a physical object as an immutable, append-only event.** That split is what makes questions like "did serial HMR-0047 get the Rev C dome or the Rev B one, and who validated it?" answerable without digging through spreadsheets.
 

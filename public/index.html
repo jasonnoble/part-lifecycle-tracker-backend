@@ -318,8 +318,8 @@
       <a id="link-app" href="#">Live app <span aria-hidden="true">↗</span></a>
       <a href="/docs/">API documentation <span aria-hidden="true">↗</span></a>
       <a href="/user_guide.pdf">User guide (PDF) <span aria-hidden="true">↗</span></a>
-      <a id="link-gh-be" href="https://github.com/jasonnoble/part-lifecycle-tracker">Backend repo <span class="tag" id="tag-gh-be">soon</span></a>
-      <a id="link-gh-fe" href="https://github.com/jasonnoble/part-lifecycle-tracker-frontend">Frontend repo <span class="tag" id="tag-gh-fe">soon</span></a>
+      <a href="https://github.com/jasonnoble/part-lifecycle-tracker-backend" target="_blank" rel="noopener">Backend repo <span aria-hidden="true">↗</span></a>
+      <a href="https://github.com/jasonnoble/part-lifecycle-tracker-frontend" target="_blank" rel="noopener">Frontend repo <span aria-hidden="true">↗</span></a>
       <a id="link-blog" href="https://jasonnoble.dev">"How I Built This" <span class="tag" id="tag-blog">soon</span></a>
     </div>
     <p class="fine">A portfolio project by <a href="https://jasonnoble.dev" target="_blank" rel="noopener">Jason Noble</a>. A minimum viable product built to validate a data model and API design for a manufacturing company.</p>
@@ -331,8 +331,6 @@
   // Fill these in as each becomes available. Empty string = "coming soon".
   const CONFIG = {
     frontendUrl: "https://app.partledger.jasonnoble.dev/",   // deployed React app
-    backendRepo: "",   // e.g. "https://github.com/jasonnoble/part-lifecycle-tracker"  (set when public)
-    frontendRepo: "",  // e.g. "https://github.com/jasonnoble/part-lifecycle-tracker-frontend"
     blogUrl: ""        // e.g. "https://jasonnoble.dev/blog/part-lifecycle-tracker"
   };
   // ─────────────────────────────────────────────────────────────────────
@@ -356,8 +354,6 @@
 
   // Hero + footer "live app" buttons
   ["btn-app","link-app"].forEach(id => wire(id, CONFIG.frontendUrl));
-  wire("link-gh-be", CONFIG.backendRepo, "tag-gh-be");
-  wire("link-gh-fe", CONFIG.frontendRepo, "tag-gh-fe");
   wire("link-blog", CONFIG.blogUrl, "tag-blog");
 </script>
 </body>
