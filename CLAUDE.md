@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Part Lifecycle Tracker — a Rails 8.1 **API-mode** application (PostgreSQL) tracking aircraft/engine parts from design through manufacture and test. It is a portfolio piece with a 72-hour v0 sprint target. The codebase is early: the full schema (14 domain tables) exists via migrations, but only a few Activerecord models, no controllers, and no routes have been built yet.
+Part Lifecycle Tracker — a Rails 8.1 **API-mode** application (PostgreSQL) tracking aircraft/engine parts from design through manufacture and test. It is a portfolio piece; the v0 sprint has shipped — the full schema (14 domain tables), models, and the API surface for the end-to-end demo flow (controllers, routes, Stytch auth) are built and deployed.
 
 ### The central domain idea — Definition vs. Instance
 
@@ -23,15 +23,16 @@ When modeling new behavior, keep these two identities separate — they have dif
 4. **`/parts/:partNumber/context` endpoint** — returns a rich snapshot meant to drop into an LLM prompt. Its `summary` field is **templated, not LLM-generated** (deterministic and fast).
 5. **Rails API mode + PostgreSQL** — chosen for speed of delivery.
 
-### v0 non-goals (do not build)
+### Non-goals (do not build)
 
-No auth (one hardcoded API key), no revision-approval workflow, no cost rollup, no MCP server, no where-used endpoint, no websockets, no multi-tenancy.
+No revision-approval workflow, no cost rollup, no MCP server, no where-used endpoint, no websockets, no multi-tenancy. (Auth was originally a v0 non-goal but has since shipped — Stytch session JWTs + role-based write gates; see the auth bullet under Architecture notes.)
 
 ## Architecture notes
 
 - **UUID primary keys everywhere**, generated in-DB via `gen_random_uuid()` (`pgcrypto` extension, enabled in the first migration). New tables must use `id: :uuid` and `type: :uuid` foreign keys to match.
 - **Invariants live in the database, not just the models.** Migrations add `add_check_constraint` for enum-like status fields (`status in (...)`), non-empty strings (`length(trim(...)) > 0`), positive quantities, non-negative stock, no self-references, and a **four-eyes constraint** on `work_order_steps` (`validated_actor <> installed_actor`). When adding states or rules, enforce them at the DB level too — don't rely on model validations alone.
-- **Models are intentionally thin so far.** `app/models` has only `part_definition`, `bom_item`, `bom_item_dependency`, `stock`. Associations use explicit `class_name`/`foreign_key` because of the self-referential BOM graph (a `PartDefinition` is both parent and child; a `BomItemDependency` links a prerequisite `BomItem` to a dependent one). Match that explicit style when wiring new associations.
+- **Auth (shipped after the v0 plan was written):** every endpoint except `POST /demo-sessions` and `/up` requires a Stytch session JWT (`Authorization: Bearer`), verified by the `Authentication` controller concern. The Stytch identity resolves to a seeded `users` row to populate `current_user`; an authenticated-but-unseeded identity gets read-only access (writes return `403 READ_ONLY`). Role-based write gates live in `app/services/permissions.rb`, keyed off `User#role` (salesperson / floor_manager / installer / qa_engineer / site_manager); the four-eyes rule (validator ≠ installer) is an identity rule layered on top. `POST /demo-sessions` mints real Stytch sessions, strictly scoped to the six seeded demo personas.
+- **Models are intentionally thin.** Associations use explicit `class_name`/`foreign_key` because of the self-referential BOM graph (a `PartDefinition` is both parent and child; a `BomItemDependency` links a prerequisite `BomItem` to a dependent one). Match that explicit style when wiring new associations.
 - **Serialization** uses `alba` (+ `oj` for fast JSON); **pagination** uses `pagy`. No jbuilder.
 - **Solid* stack** (`solid_queue`, `solid_cache`, `solid_cable`) is DB-backed — these have their own schema files (`db/queue_schema.rb`, etc.); the main app schema is `db/schema.rb`.
 
