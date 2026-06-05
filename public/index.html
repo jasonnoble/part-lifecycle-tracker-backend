@@ -58,9 +58,6 @@
   .btn.primary:hover{background:#1d4ed8; text-decoration:none}
   .btn.ghost{background:#fff; color:var(--ink); border-color:var(--line); box-shadow:var(--shadow)}
   .btn.ghost:hover{text-decoration:none; border-color:#cbd5e1}
-  .btn[data-disabled="true"]{opacity:.5; pointer-events:none}
-  .btn .tag{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-    background:#f1f5f9; color:var(--muted); padding:2px 7px; border-radius:6px}
   @media(max-width:640px){.hero h1{font-size:38px}.hero .lede{font-size:18px}}
 
   section{padding:64px 0; border-top:1px solid var(--line)}
@@ -129,8 +126,6 @@
   footer{border-top:1px solid var(--line); padding:48px 0 60px; background:var(--bg-soft)}
   .flinks{display:flex; flex-wrap:wrap; gap:28px; margin-bottom:24px}
   .flinks a{font-weight:600; color:var(--ink); display:inline-flex; align-items:center; gap:8px}
-  .flinks .tag{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-    background:#e2e8f0; color:var(--muted); padding:2px 6px; border-radius:5px}
   footer .fine{font-size:14px; color:var(--muted)}
 </style>
 </head>
@@ -155,7 +150,7 @@
     <h1>Part Lifecycle Tracker</h1>
     <p class="lede">A full-stack manufacturing app that tracks an assembly line part across its entire lifecycle — from a customer order, through supplier purchasing and physical receipt, through assembly with <b>enforced build order</b> and <b>dual sign-off</b>, to a certified finished unit. The central bet: <b>separate what a part is supposed to be from what physically exists</b>, and record every change as an immutable event, stamped with who did it.</p>
     <div class="btns">
-      <a class="btn primary" id="btn-app" href="#">Open the live app <span aria-hidden="true">→</span></a>
+      <a class="btn primary" href="https://app.partledger.jasonnoble.dev/" target="_blank" rel="noopener">Open the live app <span aria-hidden="true">→</span></a>
       <a class="btn ghost" href="/docs/">Explore the API docs</a>
     </div>
   </div>
@@ -315,46 +310,20 @@
 <footer>
   <div class="wrap">
     <div class="flinks">
-      <a id="link-app" href="#">Live app <span aria-hidden="true">↗</span></a>
+      <a href="https://app.partledger.jasonnoble.dev/" target="_blank" rel="noopener">Live app <span aria-hidden="true">↗</span></a>
       <a href="/docs/">API documentation <span aria-hidden="true">↗</span></a>
       <a href="/user_guide.pdf">User guide (PDF) <span aria-hidden="true">↗</span></a>
       <a href="https://github.com/jasonnoble/part-lifecycle-tracker-backend" target="_blank" rel="noopener">Backend repo <span aria-hidden="true">↗</span></a>
       <a href="https://github.com/jasonnoble/part-lifecycle-tracker-frontend" target="_blank" rel="noopener">Frontend repo <span aria-hidden="true">↗</span></a>
-      <a id="link-blog" href="https://jasonnoble.dev">"How I Built This" <span class="tag" id="tag-blog">soon</span></a>
+      <a href="https://jasonnoble.dev/notebook/how-i-built-part-lifecycle-tracker" target="_blank" rel="noopener">"How I Built This" <span aria-hidden="true">↗</span></a>
     </div>
     <p class="fine">A portfolio project by <a href="https://jasonnoble.dev" target="_blank" rel="noopener">Jason Noble</a>. A minimum viable product built to validate a data model and API design for a manufacturing company.</p>
   </div>
 </footer>
 
 <script>
-  // ── Configure links here ─────────────────────────────────────────────
-  // Fill these in as each becomes available. Empty string = "coming soon".
-  const CONFIG = {
-    frontendUrl: "https://app.partledger.jasonnoble.dev/",   // deployed React app
-    blogUrl: ""        // e.g. "https://jasonnoble.dev/blog/part-lifecycle-tracker"
-  };
-  // ─────────────────────────────────────────────────────────────────────
-
-  function wire(id, url, tagId){
-    const el = document.getElementById(id);
-    if(!el) return;
-    if(url){
-      el.href = url;
-      el.target = "_blank"; el.rel = "noopener";
-      el.removeAttribute("data-disabled");
-      if(tagId){ const t = document.getElementById(tagId); if(t) t.remove(); }
-    } else {
-      el.setAttribute("data-disabled","true");
-      el.setAttribute("aria-disabled","true");
-    }
-  }
-
   // Tech-stack logos: show the alt text as a hover tooltip
   document.querySelectorAll(".srow .icons img").forEach(img => { img.title = img.alt; });
-
-  // Hero + footer "live app" buttons
-  ["btn-app","link-app"].forEach(id => wire(id, CONFIG.frontendUrl));
-  wire("link-blog", CONFIG.blogUrl, "tag-blog");
 </script>
 </body>
 </html>
