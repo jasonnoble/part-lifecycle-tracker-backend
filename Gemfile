@@ -76,5 +76,5 @@ gem "aasm", "~> 5.5"
 
 
 # Stytch authentication (official backend SDK) — session JWT verification
-gem "stytch", "~> 11.0"
+gem "stytch", "~> 11.1"
 gem "rack-cors", "~> 3.0"
