@@ -51,7 +51,7 @@ group :development, :test do
   gem "factory_bot_rails", "~> 6.5"
 
   # Generates doc/openapi.yaml from request specs (run with OPENAPI=1); no-op otherwise.
-  gem "rspec-openapi", "~> 0.18"
+  gem "rspec-openapi", "~> 0.30"
 
   # Code coverage measurement (SimpleCov) + per-PR diff coverage gate (undercover).
   # Both require: false — they're CLI-only / loaded explicitly in spec_helper.
