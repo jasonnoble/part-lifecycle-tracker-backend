@@ -69,7 +69,7 @@ gem "alba", "~> 3.10"
 
 gem "oj", "~> 3.17"
 
-gem "pagy", "~> 43.5"
+gem "pagy", "~> 43.6"
 
 # State machines for status lifecycles (Part Definition, PO lines, etc.)
 gem "aasm", "~> 5.5"
